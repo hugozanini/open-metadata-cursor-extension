@@ -16,10 +16,24 @@ export interface TableResult {
 
 export class OpenMetadataService {
     private baseUrl: string;
+    private authToken?: string;
 
     constructor() {
         const config = vscode.workspace.getConfiguration('openmetadataExplorer');
         this.baseUrl = config.get<string>('openmetadataUrl') || 'http://localhost:8585';
+        this.authToken = config.get<string>('openmetadataAuthToken');
+    }
+
+    private getAuthHeaders(): Record<string, string> {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+        };
+
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+
+        return headers;
     }
 
     async search(query: string): Promise<TableResult[]> {
@@ -31,11 +45,7 @@ export class OpenMetadataService {
             
             const response = await fetch(searchUrl, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Note: Add authentication headers here if your OpenMetadata requires auth
-                    // 'Authorization': 'Bearer token'
-                }
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -92,9 +102,7 @@ export class OpenMetadataService {
             const tablesUrl = `${this.baseUrl}/api/v1/tables?limit=50`;
             const response = await fetch(tablesUrl, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -145,9 +153,7 @@ export class OpenMetadataService {
             const url = `${this.baseUrl}/api/v1/tables/${tableId}`;
             const response = await fetch(url, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -180,9 +186,7 @@ export class OpenMetadataService {
         try {
             const response = await fetch(`${this.baseUrl}/api/v1/system/version`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
             
             return response.ok;

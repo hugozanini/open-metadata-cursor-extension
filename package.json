@@ -44,6 +44,11 @@
           "type": "string",
           "default": "http://localhost:8585",
           "description": "OpenMetadata server URL"
+        },
+        "openmetadataExplorer.openmetadataAuthToken": {
+          "type": "string",
+          "description": "OpenMetadata authentication token (leave empty if auth is disabled)",
+          "default": ""
         }
       }
     },
