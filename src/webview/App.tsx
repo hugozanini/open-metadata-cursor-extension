@@ -53,7 +53,7 @@ export const App: React.FC = () => {
                 case 'searchStarted':
                     setLoading(true);
                     setError('');
-                    setAiInsights('🤖 AI is analyzing your search...');
+                    setAiInsights('');
                     break;
                     
                 case 'searchResults':
@@ -62,7 +62,7 @@ export const App: React.FC = () => {
                     if (message.aiInsights) {
                         setAiInsights(message.aiInsights);
                     } else if (message.results.length > 0) {
-                        setAiInsights('🤖 AI is analyzing your results...');
+                        setAiInsights('Analyzing search results...');
                     }
                     break;
                     
@@ -133,7 +133,7 @@ export const App: React.FC = () => {
                 {(aiInsights || (results.length > 0 && !loading)) && (
                     <AIInsights 
                         insights={aiInsights} 
-                        isStreaming={aiInsights.includes('🤖 AI is analyzing')}
+                        isStreaming={aiInsights.includes('Analyzing')}
                     />
                 )}
 

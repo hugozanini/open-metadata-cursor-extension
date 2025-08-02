@@ -166,44 +166,40 @@
     font-size: 14px;
 }
 
-/* AI Insights */
-.ai-insights {
-    background-color: var(--vscode-editor-background);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 16px;
+/* AI Overview - Google-style natural integration */
+.ai-overview {
+    margin-bottom: 20px;
+    padding: 0;
 }
 
-.ai-insights-header {
-    background-color: var(--vscode-sideBar-background);
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
-}
-
-.ai-insights-header h3 {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--vscode-descriptionForeground);
-    display: flex;
-    align-items: center;
-}
-
-.ai-insights-content {
-    padding: 12px;
-    line-height: 1.4;
-    font-size: 13px;
+.ai-overview-content {
+    color: var(--vscode-foreground);
+    line-height: 1.5;
+    font-size: 14px;
+    margin-bottom: 8px;
 }
 
 .insight-line {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     color: var(--vscode-foreground);
 }
 
 .insight-line strong {
     color: var(--vscode-terminal-ansiBlue);
     font-weight: 500;
+}
+
+.typing-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.typing-text {
+    font-style: italic;
 }
 
 /* Streaming AI Animation */

@@ -81,15 +81,18 @@ Keep your response concise and practical for data engineers.
 
     async searchInsights(query: string, searchResults: TableResult[]): Promise<string> {
         const prompt = `
-Found ${searchResults.length} tables for "${query}".
+You're analyzing ${searchResults.length} tables found for "${query}".
 
-Top matches: ${searchResults.slice(0, 3).map(r => r.name).join(', ')}
+Tables: ${searchResults.slice(0, 5).map(r => `${r.name} (${r.description || 'no description'})`).join('; ')}
 
-Respond in this exact format:
-**Key tables:** [2-3 most relevant table names]
-**Try next:** [2 related search terms]
+Write a natural explanation paragraph about what these tables contain and why they're relevant for "${query}". Then suggest 2 related searches.
 
-Keep it minimal - max 2 lines total.
+Format:
+The key tables for ${query} include [explain what each does and why it's relevant]. These tables help with [business context]. 
+
+You might also want to explore: [related term 1], [related term 2]
+
+Be informative but concise - like Google's AI overview.
         `;
 
         try {
@@ -104,10 +107,10 @@ Keep it minimal - max 2 lines total.
                         parts: [{ text: prompt }]
                     }],
                     generationConfig: {
-                        temperature: 0.5,
-                        topK: 20,
-                        topP: 0.9,
-                        maxOutputTokens: 80
+                        temperature: 0.7,
+                        topK: 30,
+                        topP: 0.95,
+                        maxOutputTokens: 150
                     }
                 })
             });

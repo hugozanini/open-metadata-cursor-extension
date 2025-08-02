@@ -90,13 +90,13 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     console.error('AI insights error:', error);
                     this._view.webview.postMessage({
                         type: 'aiInsightsUpdate',
-                        aiInsights: `⚡ Found ${searchResults.length} results. AI analysis unavailable.`
+                        aiInsights: `Found ${searchResults.length} tables. AI analysis is currently unavailable.`
                     });
                 }
             } else if (!this.geminiService) {
                 this._view.webview.postMessage({
                     type: 'aiInsightsUpdate',
-                    aiInsights: `⚡ Found ${searchResults.length} results. Configure Gemini API key for AI insights.`
+                    aiInsights: `Found ${searchResults.length} tables. Configure Gemini API key in settings for AI analysis.`
                 });
             }
 
