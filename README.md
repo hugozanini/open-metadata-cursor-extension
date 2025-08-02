@@ -30,7 +30,51 @@ npm install
 
 ### 2. Configure the Extension
 
-#### **Method 1: VS Code Settings UI (Recommended)**
+#### **Method 1: Settings JSON (Recommended)**
+
+1. **Open Settings JSON**
+   - Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+   - Type: `Preferences: Open User Settings (JSON)`
+   - Press Enter
+
+2. **Add Configuration**
+   ```json
+   {
+     "openmetadataExplorer.openmetadataUrl": "http://localhost:8585",
+     "openmetadataExplorer.geminiApiKey": "AIza_YOUR_API_KEY_HERE",
+     "openmetadataExplorer.openmetadataAuthToken": "YOUR_OPENMETADATA_BOT_TOKEN_HERE"
+   }
+   ```
+
+3. **Get Your OpenMetadata Bot Token** (Required for API access)
+
+   **Step 1: Access OpenMetadata Web UI**
+   - Open http://localhost:8585 in your browser
+   - Login with default credentials (usually `admin` / `admin`)
+
+   **Step 2: Create a Bot Account**
+   - Go to **Settings** → **Bots** (in the left sidebar)
+   - Click **"Add Bot"**
+   - Fill in the bot details:
+     - **Name**: `vscode-extension-bot`
+     - **Display Name**: `VS Code Extension Bot`
+     - **Description**: `Bot for VS Code extension API access`
+   - Click **"Create"**
+
+   **Step 3: Generate Bot Token**
+   - After creating the bot, click on it to open details
+   - Go to the **"Security"** tab
+   - Click **"Generate Token"**
+   - **Copy the JWT token** (starts with `eyJ`)
+   - **Paste it** as the `openmetadataAuthToken` value in your settings.json
+
+   **Step 4: Assign Bot Permissions**
+   - Go to **Settings** → **Roles** 
+   - Find the **"Data Consumer"** role (or create a custom role)
+   - **Assign the role** to your bot
+   - This gives the bot permission to read metadata
+
+#### **Method 2: VS Code Settings UI (Alternative)**
 
 1. **Open VS Code Settings**
    - Press `Ctrl+,` (Windows/Linux) or `Cmd+,` (Mac)
@@ -43,21 +87,7 @@ npm install
 3. **Configure Your Settings**
    - **OpenMetadata URL**: Should be `http://localhost:8585` (default)
    - **Gemini API Key**: Paste your API key from Google AI Studio (starts with `AIza...`)
-
-#### **Method 2: Settings JSON (Alternative)**
-
-1. **Open Settings JSON**
-   - Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
-   - Type: `Preferences: Open User Settings (JSON)`
-   - Press Enter
-
-2. **Add Configuration**
-   ```json
-   {
-     "openmetadataExplorer.geminiApiKey": "AIza_YOUR_API_KEY_HERE",
-     "openmetadataExplorer.openmetadataUrl": "http://localhost:8585"
-   }
-   ```
+   - **OpenMetadata Auth Token**: Paste your bot token from Step 3 above (starts with `eyJ`)
 
 ### 3. Run the Extension
 1. **Launch Extension**: Press `F5` to launch the extension in a new VS Code window
@@ -126,6 +156,7 @@ The extension can be configured through VS Code settings:
 |---------|-------------|---------|
 | `openmetadataExplorer.openmetadataUrl` | OpenMetadata server URL | `http://localhost:8585` |
 | `openmetadataExplorer.geminiApiKey` | Your Gemini API key for AI features | (empty) |
+| `openmetadataExplorer.openmetadataAuthToken` | OpenMetadata bot authentication token (JWT) | (empty) |
 
 ## Troubleshooting
 
@@ -139,12 +170,26 @@ The extension can be configured through VS Code settings:
 3. Add your Gemini API key (starts with `AIza...`)
 4. Restart the extension (close debug window and press `F5` again)
 
+#### ❌ HTTP 401: Unauthorized / Authentication Failed
+**Problem**: "Failed to search OpenMetadata: HTTP 401: Unauthorized"
+**Solution**:
+1. **Get an OpenMetadata bot token** (see configuration instructions above)
+2. **Add the token** to your VS Code settings.json:
+   ```json
+   {
+     "openmetadataExplorer.openmetadataAuthToken": "eyJ_YOUR_BOT_TOKEN_HERE"
+   }
+   ```
+3. **Restart the extension** (close debug window and press `F5` again)
+4. **Verify the token** by checking if search works
+
 #### ❌ OpenMetadata connection failed
 **Problem**: OpenMetadata shows as not configured or unreachable
 **Solution**:
 1. Ensure OpenMetadata is running: `docker ps` should show containers
 2. Visit http://localhost:8585 in your browser to verify it's accessible
 3. Check your OpenMetadata URL setting in VS Code
+4. **If you get 401 errors**, make sure you have an authentication token configured (see above)
 
 ### **Search Issues**
 
@@ -182,7 +227,8 @@ The extension can be configured through VS Code settings:
 - **Configuration Status**: 
   - OpenMetadata: ✅ http://localhost:8585
   - AI Analysis: ✅ Enabled
-- **Search functionality**: Returns tables with details
+- **Authentication**: No more "HTTP 401: Unauthorized" errors
+- **Search functionality**: Returns tables with details and metadata
 - **AI features**: Shows insights and analysis for each table
 - **Responsive UI**: Fast search and smooth interactions
 
