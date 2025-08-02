@@ -201,6 +201,31 @@
     color: var(--vscode-terminal-ansiBlue);
 }
 
+/* Streaming AI Animation */
+.typing-indicator {
+    color: var(--vscode-terminal-ansiGreen);
+    font-size: 12px;
+    margin-left: 8px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.cursor-blink {
+    color: var(--vscode-foreground);
+    font-weight: bold;
+    animation: blink 1s infinite;
+    margin-left: 2px;
+}
+
+@keyframes pulse {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0.3; }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
 /* Results section */
 .results-section {
     display: flex;

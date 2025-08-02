@@ -61,7 +61,7 @@ export const App: React.FC = () => {
                     setResults(message.results);
                     if (message.aiInsights) {
                         setAiInsights(message.aiInsights);
-                    } else {
+                    } else if (message.results.length > 0) {
                         setAiInsights('🤖 AI is analyzing your results...');
                     }
                     break;
@@ -130,15 +130,18 @@ export const App: React.FC = () => {
                     </div>
                 )}
 
+                {(aiInsights || (results.length > 0 && !loading)) && (
+                    <AIInsights 
+                        insights={aiInsights} 
+                        isStreaming={aiInsights.includes('🤖 AI is analyzing')}
+                    />
+                )}
+
                 <ResultsList 
                     results={results} 
                     loading={loading}
                     searchQuery={searchQuery}
                 />
-
-                {aiInsights && results.length > 0 && (
-                    <AIInsights insights={aiInsights} />
-                )}
             </main>
         </div>
     );
