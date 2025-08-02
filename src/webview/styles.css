@@ -1,0 +1,537 @@
+/* Main app styles */
+.app {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    padding: 16px;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.app-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    padding-bottom: 16px;
+}
+
+.app-header h1 {
+    margin: 0 0 8px 0;
+    color: var(--vscode-foreground);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.app-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Configuration status */
+.config-status {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.config-status.loading {
+    text-align: center;
+    color: var(--vscode-descriptionForeground);
+}
+
+.config-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-label {
+    color: var(--vscode-descriptionForeground);
+    min-width: 100px;
+}
+
+.config-value {
+    font-weight: 500;
+}
+
+.config-value.success {
+    color: var(--vscode-terminal-ansiGreen);
+}
+
+.config-value.warning {
+    color: var(--vscode-terminal-ansiYellow);
+}
+
+.config-value.error {
+    color: var(--vscode-terminal-ansiRed);
+}
+
+/* Search interface */
+.search-section {
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.search-input-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    outline: none;
+    font-size: 14px;
+}
+
+.search-input:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+.search-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.search-button {
+    padding: 8px 16px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.search-button:hover:not(:disabled) {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.search-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.example-queries {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.example-label {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-right: 4px;
+}
+
+.example-query-button {
+    padding: 4px 8px;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.example-query-button:hover:not(:disabled) {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.example-query-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Error message */
+.error-message {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+    border: 1px solid var(--vscode-inputValidation-errorBorder);
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+}
+
+/* AI Insights */
+.ai-insights {
+    background-color: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.ai-insights-header {
+    background-color: var(--vscode-sideBar-background);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.ai-insights-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+}
+
+.ai-insights-content {
+    padding: 16px;
+    line-height: 1.5;
+}
+
+.insight-line {
+    margin-bottom: 4px;
+}
+
+.insight-line.highlighted {
+    font-weight: 600;
+    color: var(--vscode-terminal-ansiBlue);
+}
+
+/* Results section */
+.results-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.results-header h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: var(--vscode-foreground);
+}
+
+.results-header p {
+    margin: 0;
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Loading state */
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.loading-spinner {
+    font-size: 24px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Welcome state */
+.welcome-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.welcome-state h2 {
+    margin: 0 0 16px 0;
+    color: var(--vscode-foreground);
+    font-size: 18px;
+}
+
+.welcome-state p {
+    margin: 0 0 24px 0;
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+}
+
+.feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.feature-icon {
+    font-size: 18px;
+}
+
+/* No results state */
+.no-results-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.no-results-state h3 {
+    margin: 0 0 8px 0;
+    color: var(--vscode-foreground);
+}
+
+.suggestions {
+    margin-top: 20px;
+    text-align: left;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.suggestions ul {
+    padding-left: 20px;
+}
+
+.suggestions li {
+    margin-bottom: 4px;
+}
+
+/* Table card */
+.table-card {
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.table-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editor-background);
+}
+
+.table-name-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.table-name {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    word-break: break-word;
+}
+
+.table-path {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.database, .schema {
+    color: var(--vscode-terminal-ansiBlue);
+}
+
+.table-type {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+.table-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.details-button, .ai-button {
+    padding: 4px 8px;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.details-button:hover, .ai-button:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.details-button.active, .ai-button.active {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.table-card-body {
+    padding: 16px;
+}
+
+.table-description {
+    margin: 0 0 12px 0;
+    color: var(--vscode-foreground);
+    line-height: 1.4;
+}
+
+.table-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.stat-label {
+    color: var(--vscode-descriptionForeground);
+}
+
+.stat-value {
+    color: var(--vscode-foreground);
+    font-weight: 500;
+}
+
+.table-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.tag {
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Table details */
+.table-details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.table-details h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: var(--vscode-foreground);
+}
+
+.columns-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.column-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 4px 0;
+}
+
+.column-name {
+    color: var(--vscode-terminal-ansiBlue);
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.column-type {
+    color: var(--vscode-terminal-ansiGreen);
+    font-family: var(--vscode-editor-font-family, monospace);
+    min-width: 80px;
+}
+
+.column-description {
+    color: var(--vscode-descriptionForeground);
+    flex: 1;
+}
+
+.more-columns {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+.no-columns {
+    margin: 0;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+/* AI Analysis */
+.ai-analysis {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-editor-background);
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.ai-analysis h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: var(--vscode-foreground);
+}
+
+.ai-content {
+    line-height: 1.5;
+}
+
+.ai-line {
+    margin-bottom: 4px;
+}
+
+.ai-line.highlighted {
+    font-weight: 600;
+    color: var(--vscode-terminal-ansiBlue);
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .app {
+        padding: 8px;
+    }
+    
+    .table-card-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .table-actions {
+        justify-content: flex-start;
+    }
+    
+    .table-stats {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
