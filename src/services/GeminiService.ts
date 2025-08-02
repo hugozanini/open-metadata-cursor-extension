@@ -81,26 +81,18 @@ Keep your response concise and practical for data engineers.
 
     async searchInsights(query: string, searchResults: TableResult[]): Promise<string> {
         const prompt = `
-You are a data discovery assistant helping a user explore their data catalog. 
+Analyze search results for "${query}" - ${searchResults.length} tables found.
 
-USER SEARCH: "${query}"
+KEY TABLES:
+${searchResults.slice(0, 5).map((result, index) => 
+    `• ${result.name} - ${result.description || 'No description'} (${result.rowCount || '?'} rows)`
+).join('\n')}
 
-SEARCH RESULTS (${searchResults.length} tables found):
-${searchResults.slice(0, 10).map((result, index) => 
-    `${index + 1}. ${result.name} (${result.database || 'unknown DB'}.${result.schema || 'unknown schema'})
-   - Description: ${result.description || 'No description'}
-   - Type: ${result.tableType || 'Unknown'}
-   - Rows: ${result.rowCount || 'Unknown'}
-   - Tags: ${result.tags?.join(', ') || 'None'}`
-).join('\n\n')}
+Provide 2-3 sentence summary:
+1. Most relevant tables for this search
+2. Suggest 2 related search terms
 
-Provide helpful insights:
-🎯 **What you found**: Summarize the search results relevance to the user's query
-📊 **Best matches**: Highlight the most relevant tables
-🔍 **Related searches**: Suggest 2-3 related search terms that might be useful
-💡 **Data insights**: Any interesting patterns or observations
-
-Keep it concise and actionable for a data engineer.
+Be concise and practical.
         `;
 
         try {
@@ -115,10 +107,10 @@ Keep it concise and actionable for a data engineer.
                         parts: [{ text: prompt }]
                     }],
                     generationConfig: {
-                        temperature: 0.8,
+                        temperature: 0.7,
                         topK: 40,
                         topP: 0.95,
-                        maxOutputTokens: 512
+                        maxOutputTokens: 200
                     }
                 })
             });

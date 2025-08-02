@@ -68,30 +68,37 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             // Search OpenMetadata
             const searchResults = await this.openMetadataService.search(query);
             
-            // Get AI insights if Gemini is available
-            let aiInsights = '';
-            const enhancedResults = [];
-
-            if (this.geminiService) {
-                aiInsights = await this.geminiService.searchInsights(query, searchResults);
-                
-                // Enhance each result with AI analysis
-                for (const result of searchResults) {
-                    const aiAnalysis = await this.geminiService.analyzeTable(result);
-                    enhancedResults.push({ ...result, aiAnalysis });
-                }
-            } else {
-                enhancedResults.push(...searchResults);
-                aiInsights = `Found ${searchResults.length} results. Configure Gemini API key for AI insights.`;
-            }
-
-            // Send results back to webview
+            // Send results immediately for fast display
             this._view.webview.postMessage({
                 type: 'searchResults',
                 query: query,
-                results: enhancedResults,
-                aiInsights: aiInsights
+                results: searchResults,
+                aiInsights: ''
             });
+
+            // Get AI insights asynchronously if Gemini is available
+            if (this.geminiService && searchResults.length > 0) {
+                try {
+                    const aiInsights = await this.geminiService.searchInsights(query, searchResults);
+                    
+                    // Send AI insights as a separate update
+                    this._view.webview.postMessage({
+                        type: 'aiInsightsUpdate',
+                        aiInsights: aiInsights
+                    });
+                } catch (error) {
+                    console.error('AI insights error:', error);
+                    this._view.webview.postMessage({
+                        type: 'aiInsightsUpdate',
+                        aiInsights: `⚡ Found ${searchResults.length} results. AI analysis unavailable.`
+                    });
+                }
+            } else if (!this.geminiService) {
+                this._view.webview.postMessage({
+                    type: 'aiInsightsUpdate',
+                    aiInsights: `⚡ Found ${searchResults.length} results. Configure Gemini API key for AI insights.`
+                });
+            }
 
         } catch (error) {
             console.error('Search error:', error);

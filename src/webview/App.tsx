@@ -59,6 +59,14 @@ export const App: React.FC = () => {
                 case 'searchResults':
                     setLoading(false);
                     setResults(message.results);
+                    if (message.aiInsights) {
+                        setAiInsights(message.aiInsights);
+                    } else {
+                        setAiInsights('🤖 AI is analyzing your results...');
+                    }
+                    break;
+                    
+                case 'aiInsightsUpdate':
                     setAiInsights(message.aiInsights);
                     break;
                     
@@ -122,15 +130,15 @@ export const App: React.FC = () => {
                     </div>
                 )}
 
-                {aiInsights && (
-                    <AIInsights insights={aiInsights} />
-                )}
-
                 <ResultsList 
                     results={results} 
                     loading={loading}
                     searchQuery={searchQuery}
                 />
+
+                {aiInsights && results.length > 0 && (
+                    <AIInsights insights={aiInsights} />
+                )}
             </main>
         </div>
     );
