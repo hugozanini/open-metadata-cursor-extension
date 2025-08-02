@@ -24,21 +24,48 @@ An AI-powered VS Code extension that brings intelligent data discovery to your O
 
 ### 1. Install Dependencies
 ```bash
-cd openmetadata-ai-explorer
+cd open-metadata-cursor-extension
 npm install
 ```
 
 ### 2. Configure the Extension
-1. Open VS Code settings (Ctrl/Cmd + ,)
-2. Search for "OpenMetadata AI Explorer"
-3. Set your configuration:
-   - **OpenMetadata URL**: `http://localhost:8585` (default)
-   - **Gemini API Key**: Your API key from Google AI Studio
+
+#### **Method 1: VS Code Settings UI (Recommended)**
+
+1. **Open VS Code Settings**
+   - Press `Ctrl+,` (Windows/Linux) or `Cmd+,` (Mac)
+   - Or go to **File > Preferences > Settings**
+
+2. **Find Extension Settings**
+   - In the search bar, type: **`OpenMetadata AI Explorer`**
+   - The extension settings will appear
+
+3. **Configure Your Settings**
+   - **OpenMetadata URL**: Should be `http://localhost:8585` (default)
+   - **Gemini API Key**: Paste your API key from Google AI Studio (starts with `AIza...`)
+
+#### **Method 2: Settings JSON (Alternative)**
+
+1. **Open Settings JSON**
+   - Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+   - Type: `Preferences: Open User Settings (JSON)`
+   - Press Enter
+
+2. **Add Configuration**
+   ```json
+   {
+     "openmetadataExplorer.geminiApiKey": "AIza_YOUR_API_KEY_HERE",
+     "openmetadataExplorer.openmetadataUrl": "http://localhost:8585"
+   }
+   ```
 
 ### 3. Run the Extension
-1. Press `F5` to launch the extension in a new VS Code window
-2. Look for the "OpenMetadata AI Explorer" panel at the bottom
-3. Start searching your data!
+1. **Launch Extension**: Press `F5` to launch the extension in a new VS Code window
+2. **Find the Panel**: Look for the **"OpenMetadata AI"** panel at the bottom (next to Terminal)
+3. **Verify Configuration**: You should see:
+   - **OpenMetadata**: ✅ http://localhost:8585
+   - **AI Analysis**: ✅ Enabled (if API key is configured)
+4. **Start Searching**: Try searching for "customer" or "orders"!
 
 ## Usage
 
@@ -62,7 +89,7 @@ npm install
 
 ### Project Structure
 ```
-openmetadata-ai-explorer/
+open-metadata-cursor-extension/
 ├── src/
 │   ├── extension.ts                 # Main extension entry point
 │   ├── OpenMetadataExplorerProvider.ts  # Webview provider
@@ -102,20 +129,62 @@ The extension can be configured through VS Code settings:
 
 ## Troubleshooting
 
-### "No results found"
-- Check that OpenMetadata is running at http://localhost:8585
-- Verify you have tables/data loaded in OpenMetadata
-- Try broader search terms like "user" or "order"
+### **Configuration Issues**
 
-### "AI analysis failed"
-- Ensure you have a valid Gemini API key configured
-- Check your internet connection
-- Verify the API key in VS Code settings
+#### ❌ "Configure Gemini API key" warning
+**Problem**: AI Analysis shows ⚠️ Configure Gemini API key
+**Solution**: 
+1. Go to VS Code Settings (`Ctrl+,` or `Cmd+,`)
+2. Search for "OpenMetadata AI Explorer"
+3. Add your Gemini API key (starts with `AIza...`)
+4. Restart the extension (close debug window and press `F5` again)
 
-### Extension won't load
-- Make sure you ran `npm install`
-- Try rebuilding with `npm run compile`
-- Check the VS Code Developer Console for errors
+#### ❌ OpenMetadata connection failed
+**Problem**: OpenMetadata shows as not configured or unreachable
+**Solution**:
+1. Ensure OpenMetadata is running: `docker ps` should show containers
+2. Visit http://localhost:8585 in your browser to verify it's accessible
+3. Check your OpenMetadata URL setting in VS Code
+
+### **Search Issues**
+
+#### ❌ "No results found"
+**Problem**: Search returns no tables even though OpenMetadata has data
+**Solutions**:
+- Verify you have tables/data loaded in OpenMetadata (visit the web UI)
+- Try broader search terms like "user", "customer", or "order"
+- Check OpenMetadata logs for API errors: `docker logs <openmetadata-container>`
+
+#### ❌ Search takes too long or times out
+**Solutions**:
+- Check your internet connection (needed for AI analysis)
+- Try searching without AI by configuring no Gemini API key temporarily
+- Restart OpenMetadata containers if they're unresponsive
+
+### **Extension Issues**
+
+#### ❌ Extension won't load or debug fails
+**Solutions**:
+1. **Install dependencies**: `npm install`
+2. **Rebuild**: `npm run compile`
+3. **Check for errors**: Open VS Code Developer Console (`Help > Toggle Developer Tools`)
+4. **Restart VS Code** completely
+
+#### ❌ Panel doesn't appear at bottom
+**Solutions**:
+1. Press `F5` to launch the extension
+2. Look for "OpenMetadata AI" tab at the bottom panel (next to Terminal, Output, etc.)
+3. If not visible, try `View > Panel` to show the bottom panel
+
+### **What Success Looks Like**
+
+✅ **Properly configured extension shows**:
+- **Configuration Status**: 
+  - OpenMetadata: ✅ http://localhost:8585
+  - AI Analysis: ✅ Enabled
+- **Search functionality**: Returns tables with details
+- **AI features**: Shows insights and analysis for each table
+- **Responsive UI**: Fast search and smooth interactions
 
 ## Contributing
 
