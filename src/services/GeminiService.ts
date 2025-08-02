@@ -81,18 +81,15 @@ Keep your response concise and practical for data engineers.
 
     async searchInsights(query: string, searchResults: TableResult[]): Promise<string> {
         const prompt = `
-Analyze search results for "${query}" - ${searchResults.length} tables found.
+Found ${searchResults.length} tables for "${query}".
 
-KEY TABLES:
-${searchResults.slice(0, 5).map((result, index) => 
-    `• ${result.name} - ${result.description || 'No description'} (${result.rowCount || '?'} rows)`
-).join('\n')}
+Top matches: ${searchResults.slice(0, 3).map(r => r.name).join(', ')}
 
-Provide 2-3 sentence summary:
-1. Most relevant tables for this search
-2. Suggest 2 related search terms
+Respond in this exact format:
+**Key tables:** [2-3 most relevant table names]
+**Try next:** [2 related search terms]
 
-Be concise and practical.
+Keep it minimal - max 2 lines total.
         `;
 
         try {
@@ -107,10 +104,10 @@ Be concise and practical.
                         parts: [{ text: prompt }]
                     }],
                     generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 200
+                        temperature: 0.5,
+                        topK: 20,
+                        topP: 0.9,
+                        maxOutputTokens: 80
                     }
                 })
             });

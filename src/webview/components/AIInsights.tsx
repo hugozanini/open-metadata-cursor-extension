@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface AIInsightsProps {
     insights: string;
@@ -52,26 +52,20 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ insights, isStreaming = 
     // Format the insights text for better display
     const formatInsights = (text: string) => {
         return text.split('\n').map((line, index) => {
-            // Check if line starts with emoji indicators
-            if (line.match(/^[🎯📊🔍💡⚠️]/)) {
-                return (
-                    <div key={index} className="insight-line highlighted">
-                        {line}
-                    </div>
-                );
-            }
+            // Skip empty lines
+            if (!line.trim()) return null;
             
-            // Regular line
-            if (line.trim()) {
-                return (
-                    <div key={index} className="insight-line">
-                        {line}
-                    </div>
-                );
-            }
+            // Format bold text (**text**)
+            const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
-            return <br key={index} />;
-        });
+            return (
+                <div 
+                    key={index} 
+                    className="insight-line"
+                    dangerouslySetInnerHTML={{ __html: formattedLine }}
+                />
+            );
+        }).filter(Boolean);
     };
 
     return (

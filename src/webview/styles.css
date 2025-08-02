@@ -170,35 +170,40 @@
 .ai-insights {
     background-color: var(--vscode-editor-background);
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 6px;
+    border-radius: 4px;
     overflow: hidden;
+    margin-bottom: 16px;
 }
 
 .ai-insights-header {
     background-color: var(--vscode-sideBar-background);
-    padding: 12px 16px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
 .ai-insights-header h3 {
     margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--vscode-foreground);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--vscode-descriptionForeground);
+    display: flex;
+    align-items: center;
 }
 
 .ai-insights-content {
-    padding: 16px;
-    line-height: 1.5;
+    padding: 12px;
+    line-height: 1.4;
+    font-size: 13px;
 }
 
 .insight-line {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    color: var(--vscode-foreground);
 }
 
-.insight-line.highlighted {
-    font-weight: 600;
+.insight-line strong {
     color: var(--vscode-terminal-ansiBlue);
+    font-weight: 500;
 }
 
 /* Streaming AI Animation */
