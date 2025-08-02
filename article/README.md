@@ -118,6 +118,63 @@ The setup process is straightforward and provides a complete data catalog enviro
 - **Contextual Results** - Rich metadata display with AI-powered insights  
 - **Integrated Workflow** - No need to leave the IDE for data discovery
 
+### VS Code Extension Fundamentals
+
+Building a VS Code extension requires understanding the core architecture and contribution model. Based on the [official VS Code Extension API documentation](https://code.visualstudio.com/api/extension-guides/overview), extensions are structured around several key components:
+
+#### Core Extension Structure
+
+**`package.json`** - The extension manifest defines:
+- Extension metadata (name, version, description)
+- **Contribution Points** - How the extension extends VS Code functionality
+- **Activation Events** - When the extension should be loaded
+- Dependencies and build scripts
+
+**Extension Entry Point** - The main TypeScript/JavaScript file that:
+- Registers providers and commands when activated
+- Manages extension lifecycle and cleanup
+- Handles communication between VS Code and extension features
+
+#### Strategic UI Positioning: The Terminal Panel
+
+For our data catalog extension, **positioning next to the terminal** is strategically important because:
+
+- 🔧 **High Developer Traffic** - Terminal is one of the most frequently accessed areas
+- 📍 **Bottom Panel Real Estate** - Wide horizontal space ideal for data tables and results
+- 🔄 **Workflow Integration** - Developers often switch between terminal commands and data exploration
+- 👀 **Persistent Visibility** - Stays accessible while coding in the main editor
+
+#### Implementation Approach
+
+The key to panel positioning lies in VS Code's **view containers** system:
+
+```json
+"contributes": {
+  "viewsContainers": {
+    "panel": [{
+      "id": "openmetadataPanel",
+      "title": "OpenMetadata AI", 
+      "icon": "$(database)"
+    }]
+  },
+  "views": {
+    "openmetadataPanel": [{
+      "id": "openmetadataExplorer",
+      "name": "Explorer",
+      "type": "webview"
+    }]
+  }
+}
+```
+
+This configuration creates a new panel container that appears alongside Terminal, Problems, and Debug Console tabs. The **webview type** enables rich React-based UI rendering within the VS Code environment.
+
+**Webviews** provide the flexibility needed for our data exploration interface, supporting:
+- Custom HTML/CSS/JavaScript rendering
+- Two-way communication with the extension backend
+- Integration with VS Code's theming system
+- Rich data visualization capabilities
+
 ### System Architecture
 
 The extension architecture creates a seamless bridge between the IDE and data catalog:
