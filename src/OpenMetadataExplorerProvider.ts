@@ -65,21 +65,31 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 query: query
             });
 
-            // Search OpenMetadata
-            const searchResults = await this.openMetadataService.search(query);
+            // Search OpenMetadata with natural language processing
+            const searchResult = await this.openMetadataService.searchWithNaturalLanguage(query);
             
             // Send results immediately for fast display
             this._view.webview.postMessage({
                 type: 'searchResults',
                 query: query,
-                results: searchResults,
-                aiInsights: ''
+                results: searchResult.results,
+                aiInsights: '',
+                searchContext: {
+                    originalQuery: query,
+                    searchTermsUsed: searchResult.searchTermsUsed,
+                    wasNaturalLanguage: searchResult.wasNaturalLanguage
+                }
             });
 
             // Get AI insights asynchronously if Gemini is available
-            if (this.geminiService && searchResults.length > 0) {
+            if (this.geminiService && searchResult.results.length > 0) {
                 try {
-                    const aiInsights = await this.geminiService.searchInsights(query, searchResults);
+                    const aiInsights = await this.geminiService.searchInsights(
+                        query, 
+                        searchResult.results, 
+                        searchResult.searchTermsUsed, 
+                        searchResult.wasNaturalLanguage
+                    );
                     
                     // Send AI insights as a separate update
                     this._view.webview.postMessage({
@@ -90,13 +100,17 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     console.error('AI insights error:', error);
                     this._view.webview.postMessage({
                         type: 'aiInsightsUpdate',
-                        aiInsights: `Found ${searchResults.length} tables. AI analysis is currently unavailable.`
+                        aiInsights: searchResult.wasNaturalLanguage 
+                            ? `I found ${searchResult.results.length} tables related to ${searchResult.searchTermsUsed.join(' and ')}. AI analysis is currently unavailable.`
+                            : `Found ${searchResult.results.length} tables. AI analysis is currently unavailable.`
                     });
                 }
             } else if (!this.geminiService) {
                 this._view.webview.postMessage({
                     type: 'aiInsightsUpdate',
-                    aiInsights: `Found ${searchResults.length} tables. Configure Gemini API key in settings for AI analysis.`
+                    aiInsights: searchResult.wasNaturalLanguage 
+                        ? `I found ${searchResult.results.length} tables related to ${searchResult.searchTermsUsed.join(' and ')}. Configure Gemini API key in settings for AI analysis.`
+                        : `Found ${searchResult.results.length} tables. Configure Gemini API key in settings for AI analysis.`
                 });
             }
 

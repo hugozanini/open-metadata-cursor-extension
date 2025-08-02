@@ -156,6 +156,18 @@
     cursor: not-allowed;
 }
 
+.example-query-button.natural-language {
+    background-color: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    font-style: italic;
+    border: 1px solid var(--vscode-badge-background);
+}
+
+.example-query-button.natural-language:hover:not(:disabled) {
+    background-color: var(--vscode-inputOption-hoverBackground);
+    border-color: var(--vscode-inputOption-activeBorder);
+}
+
 /* Error message */
 .error-message {
     background-color: var(--vscode-inputValidation-errorBackground);

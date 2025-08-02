@@ -79,13 +79,28 @@ Keep your response concise and practical for data engineers.
         }
     }
 
-    async searchInsights(query: string, searchResults: TableResult[]): Promise<string> {
-        const prompt = `
+    async searchInsights(query: string, searchResults: TableResult[], searchTermsUsed: string[], wasNaturalLanguage: boolean): Promise<string> {
+        const prompt = wasNaturalLanguage ? `
+The user asked: "${query}"
+
+I found ${searchResults.length} tables by searching for: ${searchTermsUsed.join(', ')}
+
+Tables found: ${searchResults.slice(0, 5).map(r => `${r.name} - ${r.description || 'stores data'}`).join('; ')}
+
+Respond conversationally as if answering the user's question directly. Explain what customer information they have based on these tables.
+
+Format:
+Based on your data catalog, you have [describe the types of customer information available]. The main tables are [explain key tables and what customer data they contain]. 
+
+You might also want to explore: [2 related searches]
+
+Be helpful and conversational - like a data assistant.
+        ` : `
 You're analyzing ${searchResults.length} tables found for "${query}".
 
 Tables: ${searchResults.slice(0, 5).map(r => `${r.name} (${r.description || 'no description'})`).join('; ')}
 
-Write a natural explanation paragraph about what these tables contain and why they're relevant for "${query}". Then suggest 2 related searches.
+Write a natural explanation about what these tables contain and why they're relevant. Then suggest 2 related searches.
 
 Format:
 The key tables for ${query} include [explain what each does and why it's relevant]. These tables help with [business context]. 
@@ -117,7 +132,9 @@ Be informative but concise - like Google's AI overview.
 
             if (!response.ok) {
                 console.error('Gemini API error for insights:', response.status);
-                return `Found ${searchResults.length} tables matching "${query}". Configure Gemini API key for AI insights.`;
+                return wasNaturalLanguage 
+                    ? `I found ${searchResults.length} tables related to ${searchTermsUsed.join(' and ')}. Configure Gemini API key for AI insights.`
+                    : `Found ${searchResults.length} tables matching "${query}". Configure Gemini API key for AI insights.`;
             }
 
             const data = await response.json();
@@ -125,12 +142,16 @@ Be informative but concise - like Google's AI overview.
             if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
                 return data.candidates[0].content.parts[0].text;
             } else {
-                return `Found ${searchResults.length} tables matching "${query}". AI insights unavailable.`;
+                return wasNaturalLanguage 
+                    ? `I found ${searchResults.length} tables related to ${searchTermsUsed.join(' and ')}. AI insights unavailable.`
+                    : `Found ${searchResults.length} tables matching "${query}". AI insights unavailable.`;
             }
 
         } catch (error) {
             console.error('Error getting search insights:', error);
-            return `Found ${searchResults.length} tables matching "${query}". Check your internet connection for AI insights.`;
+            return wasNaturalLanguage 
+                ? `I found ${searchResults.length} tables related to ${searchTermsUsed.join(' and ')}. Check your internet connection for AI insights.`
+                : `Found ${searchResults.length} tables matching "${query}". Check your internet connection for AI insights.`;
         }
     }
 

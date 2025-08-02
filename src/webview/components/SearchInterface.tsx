@@ -26,6 +26,13 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
         'payment'
     ];
 
+    const naturalLanguageExamples = [
+        'What customer information do I have?',
+        'Show me order data',
+        'How can I analyze sales?',
+        'What user data is available?'
+    ];
+
     return (
         <div className="search-section">
             <div className="search-input-container">
@@ -35,7 +42,7 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
                     value={searchQuery}
                     onChange={(e) => onSearchQueryChange(e.target.value)}
                     onKeyPress={onKeyPress}
-                    placeholder="Search tables, columns, or ask questions about your data..."
+                    placeholder="Ask me anything about your data: 'What customer information do I have?'"
                     disabled={loading}
                 />
                 <button 
@@ -52,8 +59,18 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
             </div>
 
             <div className="example-queries">
-                <span className="example-label">Try searching for:</span>
-                {exampleQueries.map((query) => (
+                <span className="example-label">Try asking:</span>
+                {naturalLanguageExamples.slice(0, 2).map((query) => (
+                    <button
+                        key={query}
+                        className="example-query-button natural-language"
+                        onClick={() => onExampleSearch(query)}
+                        disabled={loading}
+                    >
+                        {query}
+                    </button>
+                ))}
+                {exampleQueries.slice(0, 4).map((query) => (
                     <button
                         key={query}
                         className="example-query-button"

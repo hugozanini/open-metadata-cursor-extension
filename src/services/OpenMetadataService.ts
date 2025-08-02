@@ -24,6 +24,105 @@ export class OpenMetadataService {
         this.authToken = config.get<string>('openmetadataAuthToken');
     }
 
+    // Extract meaningful search terms from natural language queries
+    private extractSearchTerms(query: string): string[] {
+        // Remove common question words and phrases
+        const stopWords = [
+            'what', 'where', 'when', 'how', 'why', 'which', 'who',
+            'do', 'does', 'did', 'can', 'could', 'would', 'should',
+            'i', 'have', 'get', 'find', 'show', 'me', 'my', 'the', 'a', 'an',
+            'is', 'are', 'was', 'were', 'about', 'for', 'with', 'in', 'on',
+            'information', 'data', 'table', 'tables'
+        ];
+
+        // Extract potential data-related terms
+        const dataTerms = [
+            'customer', 'customers', 'user', 'users', 'client', 'clients',
+            'order', 'orders', 'purchase', 'purchases', 'transaction', 'transactions',
+            'product', 'products', 'item', 'items', 'inventory',
+            'sale', 'sales', 'revenue', 'payment', 'payments',
+            'address', 'addresses', 'location', 'locations',
+            'profile', 'profiles', 'account', 'accounts',
+            'metric', 'metrics', 'analytics', 'report', 'reports'
+        ];
+
+        const words = query.toLowerCase()
+            .replace(/[^\w\s]/g, ' ') // Remove punctuation
+            .split(/\s+/)
+            .filter(word => word.length > 2);
+
+        // Find data-related terms or use non-stop words
+        const searchTerms = words.filter(word => 
+            dataTerms.includes(word) || !stopWords.includes(word)
+        );
+
+        return searchTerms.length > 0 ? searchTerms : words.filter(word => !stopWords.includes(word));
+    }
+
+    private isNaturalLanguageQuery(query: string): boolean {
+        const questionWords = ['what', 'where', 'when', 'how', 'why', 'which', 'who'];
+        const questionMarkers = ['?', 'do i have', 'can i find', 'show me', 'tell me'];
+        
+        const lowerQuery = query.toLowerCase();
+        return questionWords.some(word => lowerQuery.startsWith(word)) ||
+               questionMarkers.some(marker => lowerQuery.includes(marker)) ||
+               query.includes('?');
+    }
+
+    // Enhanced search that handles natural language
+    async searchWithNaturalLanguage(query: string): Promise<{ results: TableResult[], searchTermsUsed: string[], wasNaturalLanguage: boolean }> {
+        try {
+            console.log(`Searching OpenMetadata for: ${query}`);
+            
+            // Try original query first
+            let results = await this.search(query);
+
+            // If no results and query looks like natural language, try extracted terms
+            if (results.length === 0 && this.isNaturalLanguageQuery(query)) {
+                const searchTerms = this.extractSearchTerms(query);
+                console.log(`No results for original query. Trying extracted terms: ${searchTerms.join(', ')}`);
+                
+                if (searchTerms.length > 0) {
+                    const allResults: TableResult[] = [];
+                    const foundTerms: string[] = [];
+
+                    for (const term of searchTerms) {
+                        try {
+                            const termResults = await this.search(term);
+                            if (termResults.length > 0) {
+                                foundTerms.push(term);
+                                // Add results, avoiding duplicates
+                                termResults.forEach(result => {
+                                    if (!allResults.find(r => r.id === result.id)) {
+                                        allResults.push(result);
+                                    }
+                                });
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to search for term: ${term}`, error);
+                        }
+                    }
+
+                    console.log(`Found ${allResults.length} results using extracted terms: ${foundTerms.join(', ')}`);
+                    return {
+                        results: allResults.slice(0, 20), // Limit to 20 results
+                        searchTermsUsed: foundTerms,
+                        wasNaturalLanguage: true
+                    };
+                }
+            }
+
+            return {
+                results,
+                searchTermsUsed: [query],
+                wasNaturalLanguage: false
+            };
+        } catch (error) {
+            console.error('Error searching OpenMetadata:', error);
+            throw error;
+        }
+    }
+
     private getAuthHeaders(): Record<string, string> {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json'
