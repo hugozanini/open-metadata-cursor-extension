@@ -20,12 +20,14 @@ interface ResultsListProps {
     results: TableResult[];
     loading: boolean;
     searchQuery: string;
+    onViewLineage?: (tableFqn: string, tableName: string) => void;
 }
 
 export const ResultsList: React.FC<ResultsListProps> = ({ 
     results, 
     loading, 
-    searchQuery 
+    searchQuery,
+    onViewLineage
 }) => {
     if (loading) {
         return (
@@ -99,7 +101,8 @@ export const ResultsList: React.FC<ResultsListProps> = ({
                 {results.map((result) => (
                     <TableCard 
                         key={result.id} 
-                        table={result} 
+                        table={result}
+                        onViewLineage={onViewLineage}
                     />
                 ))}
             </div>

@@ -573,3 +573,484 @@
         gap: 8px;
     }
 }
+
+/* ========================================
+   LINEAGE STYLES
+   ======================================== */
+
+/* Lineage button in table cards */
+.lineage-button {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lineage-button:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+    transform: translateY(-1px);
+}
+
+.lineage-button:active {
+    transform: translateY(0);
+}
+
+/* Lineage Modal Backdrop */
+.lineage-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+/* Lineage Modal Content */
+.lineage-modal-content {
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    max-width: 95vw;
+    max-height: 95vh;
+    width: 1200px;
+    height: 800px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Lineage Modal Header */
+.lineage-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-titleBar-activeBackground);
+}
+
+.lineage-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lineage-modal-title h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--vscode-titleBar-activeForeground);
+}
+
+.lineage-icon {
+    font-size: 18px;
+}
+
+.lineage-modal-close {
+    background: none;
+    border: none;
+    color: var(--vscode-titleBar-activeForeground);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.lineage-modal-close:hover {
+    background: var(--vscode-titleBar-inactiveBackground);
+}
+
+/* Lineage Modal Body */
+.lineage-modal-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Lineage Modal Footer */
+.lineage-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-top: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-sideBar-background);
+}
+
+.lineage-legend {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-color.center {
+    background: var(--vscode-terminal-ansiRed);
+}
+
+.legend-color.upstream {
+    background: var(--vscode-terminal-ansiGreen);
+}
+
+.legend-color.downstream {
+    background: var(--vscode-terminal-ansiYellow);
+}
+
+.lineage-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.secondary-button {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.secondary-button:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Lineage Viewer */
+.lineage-viewer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: var(--vscode-editor-background);
+}
+
+.lineage-viewer.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lineage-viewer.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lineage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-sideBar-background);
+}
+
+.lineage-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.close-button:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
+
+.reactflow-wrapper {
+    width: 100%;
+    height: 100%;
+}
+
+/* ReactFlow overrides for dark theme */
+.react-flow {
+    background: var(--vscode-editor-background);
+}
+
+.react-flow .react-flow__controls {
+    background: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.react-flow .react-flow__controls button {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+}
+
+.react-flow .react-flow__controls button:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.react-flow .react-flow__minimap {
+    background: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+}
+
+.react-flow .react-flow__attribution {
+    background: var(--vscode-sideBar-background);
+    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--vscode-panel-border);
+}
+
+/* Lineage Node Styles */
+.lineage-node {
+    background: var(--vscode-editor-background);
+    border: 2px solid var(--vscode-terminal-ansiBlue);
+    border-radius: 8px;
+    padding: 12px;
+    width: 200px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.lineage-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lineage-node.center-node {
+    border-color: var(--vscode-terminal-ansiRed);
+    background: var(--vscode-list-activeSelectionBackground);
+}
+
+.lineage-node.upstream-node {
+    border-color: var(--vscode-terminal-ansiGreen);
+}
+
+.lineage-node.downstream-node {
+    border-color: var(--vscode-terminal-ansiYellow);
+}
+
+.lineage-node.deleted-node {
+    opacity: 0.6;
+    border-style: dashed;
+}
+
+.node-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.entity-icon {
+    font-size: 16px;
+}
+
+.entity-type {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.node-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.entity-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.service-name {
+    font-size: 11px;
+    color: var(--vscode-terminal-ansiBlue);
+    font-weight: 500;
+}
+
+.entity-description {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.center-indicator {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--vscode-terminal-ansiRed);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+/* Loading states */
+.lineage-loading,
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 100%;
+    color: var(--vscode-descriptionForeground);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--vscode-progressBackground);
+    border-top: 3px solid var(--vscode-terminal-ansiBlue);
+    border-radius: 50%;
+    animation: spin-lineage 1s linear infinite;
+}
+
+@keyframes spin-lineage {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error states */
+.lineage-error,
+.error-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 100%;
+    text-align: center;
+    padding: 40px;
+}
+
+.error-icon {
+    font-size: 48px;
+}
+
+.error-content h3 {
+    margin: 0;
+    color: var(--vscode-errorForeground);
+    font-size: 16px;
+}
+
+.error-content p {
+    margin: 0;
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+}
+
+.retry-button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.retry-button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+/* Empty state */
+.lineage-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 100%;
+    text-align: center;
+    padding: 40px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.empty-icon {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.lineage-empty h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--vscode-foreground);
+}
+
+.lineage-empty p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive lineage modal */
+@media (max-width: 768px) {
+    .lineage-modal-content {
+        width: 95vw;
+        height: 90vh;
+        margin: 0;
+    }
+    
+    .lineage-legend {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .lineage-modal-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .lineage-actions {
+        justify-content: center;
+    }
+}

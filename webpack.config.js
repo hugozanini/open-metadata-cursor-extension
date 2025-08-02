@@ -25,7 +25,13 @@ module.exports = [
           exclude: /node_modules/,
           use: [
             {
-              loader: 'ts-loader'
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true,
+                compilerOptions: {
+                  skipLibCheck: true
+                }
+              }
             }
           ]
         }
@@ -55,7 +61,13 @@ module.exports = [
           exclude: /node_modules/,
           use: [
             {
-              loader: 'ts-loader'
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true,
+                compilerOptions: {
+                  skipLibCheck: true
+                }
+              }
             }
           ]
         },

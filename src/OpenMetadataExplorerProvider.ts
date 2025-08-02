@@ -1,16 +1,19 @@
 import * as vscode from 'vscode';
 import { GeminiService } from './services/GeminiService';
 import { OpenMetadataService } from './services/OpenMetadataService';
+import { LineageService } from './services/LineageService';
 
 export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'openmetadataExplorer';
     private _view?: vscode.WebviewView;
     private openMetadataService: OpenMetadataService;
     private geminiService?: GeminiService;
+    private lineageService!: LineageService;
 
     constructor(private readonly _extensionUri: vscode.Uri) {
         this.openMetadataService = new OpenMetadataService();
         this.initializeGeminiService();
+        this.initializeLineageService();
     }
 
     private initializeGeminiService() {
@@ -20,6 +23,14 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
         if (apiKey) {
             this.geminiService = new GeminiService(apiKey);
         }
+    }
+
+    private initializeLineageService() {
+        const config = vscode.workspace.getConfiguration('openmetadataExplorer');
+        const openmetadataUrl = config.get<string>('openmetadataUrl') || 'http://localhost:8585';
+        const authToken = config.get<string>('openmetadataAuthToken') || '';
+        
+        this.lineageService = new LineageService(openmetadataUrl, authToken);
     }
 
     public resolveWebviewView(
@@ -44,6 +55,9 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     break;
                 case 'getConfig':
                     await this.sendConfig();
+                    break;
+                case 'getLineage':
+                    await this.handleGetLineage(data.tableFqn, data.entityType);
                     break;
                 case 'error':
                     vscode.window.showErrorMessage(data.message);
@@ -123,6 +137,30 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
         }
     }
 
+    private async handleGetLineage(tableFqn: string, entityType: string = 'table') {
+        if (!this._view) return;
+
+        try {
+            // Get simple lineage data
+            const lineageData = await this.lineageService.getSimpleLineage(tableFqn, entityType, 2);
+            
+            // Send lineage data to webview
+            this._view.webview.postMessage({
+                type: 'lineageData',
+                tableFqn: tableFqn,
+                lineageData: lineageData
+            });
+
+        } catch (error) {
+            console.error('Lineage error:', error);
+            this._view.webview.postMessage({
+                type: 'lineageError',
+                tableFqn: tableFqn,
+                error: error instanceof Error ? error.message : 'Failed to load lineage data'
+            });
+        }
+    }
+
     private async sendConfig() {
         if (!this._view) return;
 
@@ -132,7 +170,8 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             type: 'config',
             config: {
                 openmetadataUrl: config.get<string>('openmetadataUrl'),
-                hasGeminiKey: !!config.get<string>('geminiApiKey')
+                hasGeminiKey: !!config.get<string>('geminiApiKey'),
+                hasAuthToken: !!config.get<string>('openmetadataAuthToken')
             }
         });
     }

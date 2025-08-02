@@ -17,9 +17,10 @@ interface TableResult {
 
 interface TableCardProps {
     table: TableResult;
+    onViewLineage?: (tableFqn: string, tableName: string) => void;
 }
 
-export const TableCard: React.FC<TableCardProps> = ({ table }) => {
+export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) => {
     const [showDetails, setShowDetails] = useState(false);
     const [showAI, setShowAI] = useState(false);
 
@@ -74,6 +75,15 @@ export const TableCard: React.FC<TableCardProps> = ({ table }) => {
                             title="Toggle AI analysis"
                         >
                             🤖 AI
+                        </button>
+                    )}
+                    {onViewLineage && (
+                        <button
+                            className="lineage-button"
+                            onClick={() => onViewLineage(table.fullyQualifiedName, table.name)}
+                            title="View data lineage"
+                        >
+                            🔗 Lineage
                         </button>
                     )}
                 </div>

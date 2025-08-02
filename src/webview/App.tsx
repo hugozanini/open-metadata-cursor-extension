@@ -3,6 +3,7 @@ import { AIInsights } from './components/AIInsights';
 import { ConfigStatus } from './components/ConfigStatus';
 import { ResultsList } from './components/ResultsList';
 import { SearchInterface } from './components/SearchInterface';
+import LineageModal from './components/Lineage/LineageModal';
 import './styles.css';
 
 // VS Code API type
@@ -26,6 +27,7 @@ interface TableResult {
 interface Config {
     openmetadataUrl: string;
     hasGeminiKey: boolean;
+    hasAuthToken: boolean;
 }
 
 export const App: React.FC = () => {
@@ -36,6 +38,17 @@ export const App: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [config, setConfig] = useState<Config | null>(null);
     const [error, setError] = useState('');
+    
+    // Lineage modal state
+    const [lineageModal, setLineageModal] = useState<{
+        isOpen: boolean;
+        tableFqn: string;
+        tableName: string;
+    }>({
+        isOpen: false,
+        tableFqn: '',
+        tableName: '',
+    });
 
     useEffect(() => {
         // Request configuration when component mounts
@@ -107,6 +120,23 @@ export const App: React.FC = () => {
         vscode.postMessage({ type: 'search', query });
     };
 
+    // Lineage handling functions
+    const handleViewLineage = (tableFqn: string, tableName: string) => {
+        setLineageModal({
+            isOpen: true,
+            tableFqn,
+            tableName,
+        });
+    };
+
+    const handleCloseLineage = () => {
+        setLineageModal({
+            isOpen: false,
+            tableFqn: '',
+            tableName: '',
+        });
+    };
+
     return (
         <div className="app">
             <header className="app-header">
@@ -141,8 +171,17 @@ export const App: React.FC = () => {
                     results={results} 
                     loading={loading}
                     searchQuery={searchQuery}
+                    onViewLineage={handleViewLineage}
                 />
             </main>
+
+            {/* Lineage Modal */}
+            <LineageModal
+                tableFqn={lineageModal.tableFqn}
+                tableName={lineageModal.tableName}
+                isOpen={lineageModal.isOpen}
+                onClose={handleCloseLineage}
+            />
         </div>
     );
 };
