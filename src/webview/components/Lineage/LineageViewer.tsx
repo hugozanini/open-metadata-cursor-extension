@@ -53,8 +53,8 @@ export interface LineageNodeData {
     isDownstream: boolean;
     hasUpstreamConnections?: boolean;
     hasDownstreamConnections?: boolean;
-    upstreamExpandPerformed?: boolean;
-    downstreamExpandPerformed?: boolean;
+    upstreamCollapsed?: boolean;
+    downstreamCollapsed?: boolean;
     hasMoreUpstream?: boolean;
     hasMoreDownstream?: boolean;
     onExpand?: (entity: EntityReference, direction: string) => void;
@@ -75,11 +75,9 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
     const [reactFlowEdges, setReactFlowEdges, onEdgesChange] = useEdgesState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
     
-    // Track expanded/collapsed nodes and expand state
-    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-    const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
-    const [upstreamExpandPerformed, setUpstreamExpandPerformed] = useState<Set<string>>(new Set());
-    const [downstreamExpandPerformed, setDownstreamExpandPerformed] = useState<Set<string>>(new Set());
+    // Track collapsed state for each direction per node
+    const [upstreamCollapsed, setUpstreamCollapsed] = useState<Set<string>>(new Set());
+    const [downstreamCollapsed, setDownstreamCollapsed] = useState<Set<string>>(new Set());
 
     // Transform OpenMetadata lineage data to ReactFlow format
     const transformToReactFlowData = useCallback(() => {
@@ -113,14 +111,14 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                 (edge.fromEntity.fullyQualifiedName || edge.fromEntity.id) === nodeId
             );
             
-            // Check expand/collapse state
-            const upstreamExpanded = upstreamExpandPerformed.has(nodeId);
-            const downstreamExpanded = downstreamExpandPerformed.has(nodeId);
+            // Check collapse state
+            const isUpstreamCollapsed = upstreamCollapsed.has(nodeId);
+            const isDownstreamCollapsed = downstreamCollapsed.has(nodeId);
             
             // For simplicity, assume leaf nodes (no connections) can potentially be expanded
             // In a real implementation, this would come from the API indicating if more data is available
-            const hasMoreUpstream = !hasUpstreamConnections && !upstreamExpanded;
-            const hasMoreDownstream = !hasDownstreamConnections && !downstreamExpanded;
+            const hasMoreUpstream = !hasUpstreamConnections;
+            const hasMoreDownstream = !hasDownstreamConnections;
 
             return {
                 id: node.id,
@@ -133,8 +131,8 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     isDownstream: !isCenter && isDownstream,
                     hasUpstreamConnections,
                     hasDownstreamConnections,
-                    upstreamExpandPerformed: upstreamExpanded,
-                    downstreamExpandPerformed: downstreamExpanded,
+                    upstreamCollapsed: isUpstreamCollapsed,
+                    downstreamCollapsed: isDownstreamCollapsed,
                     hasMoreUpstream,
                     hasMoreDownstream,
                     onExpand: handleExpand,
@@ -228,11 +226,19 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
         const nodeId = entity.fullyQualifiedName || entity.id;
         console.log('Expanding', direction, 'for entity:', entity.name);
         
-        // Track which direction was expanded
+        // Remove from collapsed state (expand means uncollapse)
         if (direction === 'upstream') {
-            setUpstreamExpandPerformed(prev => new Set(prev).add(nodeId));
+            setUpstreamCollapsed(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(nodeId);
+                return newSet;
+            });
         } else if (direction === 'downstream') {
-            setDownstreamExpandPerformed(prev => new Set(prev).add(nodeId));
+            setDownstreamCollapsed(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(nodeId);
+                return newSet;
+            });
         }
         
         // Request additional data from parent component
@@ -243,19 +249,11 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
         const nodeId = entity.fullyQualifiedName || entity.id;
         console.log('Collapsing', direction, 'for entity:', entity.name);
         
-        // Reset expand state for the direction
+        // Add to collapsed state
         if (direction === 'upstream') {
-            setUpstreamExpandPerformed(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(nodeId);
-                return newSet;
-            });
+            setUpstreamCollapsed(prev => new Set(prev).add(nodeId));
         } else if (direction === 'downstream') {
-            setDownstreamExpandPerformed(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(nodeId);
-                return newSet;
-            });
+            setDownstreamCollapsed(prev => new Set(prev).add(nodeId));
         }
         
         // Notify parent component

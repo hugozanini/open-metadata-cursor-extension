@@ -18,10 +18,10 @@ export enum LineageDirection {
 interface ExpandCollapseButtonsProps {
     hasUpstream?: boolean;
     hasDownstream?: boolean;
+    upstreamCollapsed?: boolean;
+    downstreamCollapsed?: boolean;
     canExpandUpstream?: boolean;
     canExpandDownstream?: boolean;
-    upstreamExpandPerformed?: boolean;
-    downstreamExpandPerformed?: boolean;
     onExpand?: (direction: LineageDirection) => void;
     onCollapse?: (direction: LineageDirection) => void;
 }
@@ -43,10 +43,10 @@ const MinusIcon: React.FC = () => (
 const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
     hasUpstream = false,
     hasDownstream = false,
+    upstreamCollapsed = false,
+    downstreamCollapsed = false,
     canExpandUpstream = false,
     canExpandDownstream = false,
-    upstreamExpandPerformed = false,
-    downstreamExpandPerformed = false,
     onExpand,
     onCollapse,
 }) => {
@@ -73,7 +73,7 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
     return (
         <>
             {/* Upstream buttons (left side) */}
-            {canExpandUpstream && (
+            {(hasUpstream && upstreamCollapsed) || canExpandUpstream ? (
                 <button
                     className="lineage-expand-button upstream"
                     onClick={handleExpandUpstream}
@@ -81,8 +81,9 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
                 >
                     <PlusIcon />
                 </button>
-            )}
-            {upstreamExpandPerformed && hasUpstream && (
+            ) : null}
+            
+            {hasUpstream && !upstreamCollapsed && (
                 <button
                     className="lineage-collapse-button upstream"
                     onClick={handleCollapseUpstream}
@@ -93,7 +94,7 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
             )}
 
             {/* Downstream buttons (right side) */}
-            {canExpandDownstream && (
+            {(hasDownstream && downstreamCollapsed) || canExpandDownstream ? (
                 <button
                     className="lineage-expand-button downstream"
                     onClick={handleExpandDownstream}
@@ -101,8 +102,9 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
                 >
                     <PlusIcon />
                 </button>
-            )}
-            {downstreamExpandPerformed && hasDownstream && (
+            ) : null}
+            
+            {hasDownstream && !downstreamCollapsed && (
                 <button
                     className="lineage-collapse-button downstream"
                     onClick={handleCollapseDownstream}
