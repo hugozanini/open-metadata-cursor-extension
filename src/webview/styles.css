@@ -803,6 +803,7 @@
     border: 1px solid var(--vscode-panel-border);
 }
 
+
 /* OpenMetadata-style Lineage Node - Exact match to their design */
 .lineage-node-minimal {
     background: var(--vscode-editor-background);

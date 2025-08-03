@@ -9,7 +9,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
     Background,
     ConnectionMode,
-    Controls,
     Edge,
     MarkerType,
     MiniMap,
@@ -256,7 +255,6 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     }}
                     attributionPosition="top-right"
                 >
-                    <Controls />
                     <MiniMap 
                         nodeStrokeColor="var(--vscode-panel-border)"
                         nodeColor="var(--vscode-editor-background)"
