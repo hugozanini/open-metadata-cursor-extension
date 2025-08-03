@@ -115,6 +115,60 @@ export class LineageService {
     }
 
     /**
+     * Get lineage data in a specific direction only
+     */
+    async getDirectionalLineage(
+        fqn: string,
+        entityType: string = 'table',
+        upstreamDepth: number = 0,
+        downstreamDepth: number = 0
+    ): Promise<{
+        nodes: EntityReference[];
+        edges: EdgeDetails[];
+        centerNode: EntityReference;
+    }> {
+        try {
+            const lineageData = await this.getLineageData(fqn, entityType, {
+                upstreamDepth,
+                downstreamDepth,
+            });
+
+            // Extract nodes from the lineage data
+            const nodes: EntityReference[] = Object.values(lineageData.nodes).map(nodeData => nodeData.entity);
+            
+            // Find the center node (the one we requested lineage for)
+            const centerNode = nodes.find(node => node.fullyQualifiedName === fqn);
+            
+            if (!centerNode) {
+                throw new Error(`Center node not found for FQN: ${fqn}`);
+            }
+
+            // Combine upstream and downstream edges
+            const allEdges: EdgeDetails[] = [];
+            
+            // Add upstream edges if requested
+            if (upstreamDepth > 0 && lineageData.upstreamEdges) {
+                allEdges.push(...lineageData.upstreamEdges);
+            }
+            
+            // Add downstream edges if requested
+            if (downstreamDepth > 0 && lineageData.downstreamEdges) {
+                allEdges.push(...lineageData.downstreamEdges);
+            }
+
+            return {
+                nodes,
+                edges: allEdges,
+                centerNode
+            };
+
+        } catch (error) {
+            console.error('Error getting directional lineage:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get simplified lineage data with just the essential information
      */
     async getSimpleLineage(

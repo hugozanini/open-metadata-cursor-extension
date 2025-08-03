@@ -173,8 +173,18 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
         try {
             console.log(`Expanding lineage for node ${nodeId} in direction ${direction}`);
             
-            // Get additional lineage data for the specific node
-            const expandedData = await this.lineageService.getSimpleLineage(nodeId, entityType, 2);
+            // Get lineage data in the specified direction only
+            let expandedData;
+            if (direction === 'upstream') {
+                // Only get upstream data
+                expandedData = await this.lineageService.getDirectionalLineage(nodeId, entityType, 2, 0);
+            } else if (direction === 'downstream') {
+                // Only get downstream data  
+                expandedData = await this.lineageService.getDirectionalLineage(nodeId, entityType, 0, 2);
+            } else {
+                // Fallback - get both directions (shouldn't happen)
+                expandedData = await this.lineageService.getSimpleLineage(nodeId, entityType, 2);
+            }
             
             // Send expanded data to webview to be merged
             this._view.webview.postMessage({
