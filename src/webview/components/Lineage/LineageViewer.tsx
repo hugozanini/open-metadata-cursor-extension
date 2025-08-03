@@ -118,11 +118,11 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             
             // Determine if this node can show expand/collapse buttons in each direction
             // Show buttons if:
-            // 1. Has connections in that direction (either visible or hidden)
-            // 2. OR could potentially have connections (for leaf nodes that might expand)
-            // Center nodes can definitely have buttons if they have connections!
-            const canExpandUpstream = hasUpstreamConnections || (!hasUpstreamConnections && !isCenter && isUpstream);
-            const canExpandDownstream = hasDownstreamConnections || (!hasDownstreamConnections && !isCenter && isDownstream);
+            // 1. Has connections in that direction (show - to collapse)
+            // 2. Center node (can always try to expand in both directions)
+            // 3. Non-center leaf nodes (can try to expand in their direction)
+            const canExpandUpstream = isCenter || hasUpstreamConnections || (!hasUpstreamConnections && isUpstream);
+            const canExpandDownstream = isCenter || hasDownstreamConnections || (!hasDownstreamConnections && isDownstream);
 
             return {
                 id: node.id,
