@@ -197,7 +197,7 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             setReactFlowEdges(flowEdges);
         });
 
-    }, [nodes, edges, centerNodeFqn, upstreamHidden, downstreamHidden, handleExpand, handleCollapse, handleNodeClick, setReactFlowNodes, setReactFlowEdges]);
+    }, [nodes, edges, centerNodeFqn, upstreamHidden, downstreamHidden, setReactFlowNodes, setReactFlowEdges]);
 
     // Transform data when props change
     useEffect(() => {
