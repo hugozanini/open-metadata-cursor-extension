@@ -85,12 +85,10 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
 
             {/* Expand/Collapse Buttons */}
             <ExpandCollapseButtons
-                hasUpstream={data.hasUpstreamConnections || false}
-                hasDownstream={data.hasDownstreamConnections || false}
-                upstreamCollapsed={data.upstreamCollapsed || false}
-                downstreamCollapsed={data.downstreamCollapsed || false}
-                canExpandUpstream={!isCenter && data.hasMoreUpstream}
-                canExpandDownstream={!isCenter && data.hasMoreDownstream}
+                upstreamExpanded={data.upstreamExpanded || false}
+                downstreamExpanded={data.downstreamExpanded || false}
+                canExpandUpstream={data.canExpandUpstream || false}
+                canExpandDownstream={data.canExpandDownstream || false}
                 onExpand={(direction) => onExpand?.(entity, direction)}
                 onCollapse={(direction) => onCollapse?.(entity, direction)}
             />
