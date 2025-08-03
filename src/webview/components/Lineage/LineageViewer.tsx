@@ -243,14 +243,13 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                 animated: false,
                 markerEnd: {
                     type: MarkerType.ArrowClosed,
-                    width: 20,
-                    height: 20,
-                    color: 'var(--vscode-foreground)',
+                    width: 15,
+                    height: 15,
+                    color: 'var(--vscode-panel-border)',
                 },
                 style: {
-                    stroke: 'var(--vscode-foreground)',
-                    strokeWidth: 2,
-                    opacity: 0.8,
+                    stroke: 'var(--vscode-panel-border)',
+                    strokeWidth: 1.5,
                 },
                 // No label - clean edges like OpenMetadata
             };
