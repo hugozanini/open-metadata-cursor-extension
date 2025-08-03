@@ -97,8 +97,75 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             upstreamMap.add(edge.fromEntity.fullyQualifiedName || edge.fromEntity.id);
         });
 
-        // Transform nodes
-        const flowNodes: Node<LineageNodeData>[] = nodes.map((node, index) => {
+        // Determine which nodes should be completely hidden (removed from canvas)
+        const getHiddenNodes = () => {
+            const hiddenNodeIds = new Set<string>();
+            
+            // For each node that has collapsed connections, hide all connected nodes in that direction
+            upstreamHidden.forEach(nodeId => {
+                // Find all upstream nodes connected to this node and hide them
+                edges.forEach(edge => {
+                    const targetId = edge.toEntity.fullyQualifiedName || edge.toEntity.id;
+                    if (targetId === nodeId) {
+                        const sourceId = edge.fromEntity.fullyQualifiedName || edge.fromEntity.id;
+                        hiddenNodeIds.add(sourceId);
+                        
+                        // Recursively hide upstream nodes of hidden nodes
+                        const addUpstreamRecursively = (currentId: string) => {
+                            edges.forEach(e => {
+                                const tId = e.toEntity.fullyQualifiedName || e.toEntity.id;
+                                if (tId === currentId) {
+                                    const sId = e.fromEntity.fullyQualifiedName || e.fromEntity.id;
+                                    if (!hiddenNodeIds.has(sId)) {
+                                        hiddenNodeIds.add(sId);
+                                        addUpstreamRecursively(sId);
+                                    }
+                                }
+                            });
+                        };
+                        addUpstreamRecursively(sourceId);
+                    }
+                });
+            });
+            
+            downstreamHidden.forEach(nodeId => {
+                // Find all downstream nodes connected to this node and hide them
+                edges.forEach(edge => {
+                    const sourceId = edge.fromEntity.fullyQualifiedName || edge.fromEntity.id;
+                    if (sourceId === nodeId) {
+                        const targetId = edge.toEntity.fullyQualifiedName || edge.toEntity.id;
+                        hiddenNodeIds.add(targetId);
+                        
+                        // Recursively hide downstream nodes of hidden nodes
+                        const addDownstreamRecursively = (currentId: string) => {
+                            edges.forEach(e => {
+                                const sId = e.fromEntity.fullyQualifiedName || e.fromEntity.id;
+                                if (sId === currentId) {
+                                    const tId = e.toEntity.fullyQualifiedName || e.toEntity.id;
+                                    if (!hiddenNodeIds.has(tId)) {
+                                        hiddenNodeIds.add(tId);
+                                        addDownstreamRecursively(tId);
+                                    }
+                                }
+                            });
+                        };
+                        addDownstreamRecursively(targetId);
+                    }
+                });
+            });
+            
+            return hiddenNodeIds;
+        };
+
+        const hiddenNodeIds = getHiddenNodes();
+
+        // Transform nodes - filter out hidden nodes
+        const flowNodes: Node<LineageNodeData>[] = nodes
+            .filter(node => {
+                const nodeId = node.fullyQualifiedName || node.id;
+                return !hiddenNodeIds.has(nodeId);
+            })
+            .map((node, index) => {
             const isCenter = node.fullyQualifiedName === centerNodeFqn;
             const isDownstream = downstreamMap.has(node.fullyQualifiedName);
             const isUpstream = upstreamMap.has(node.fullyQualifiedName);
@@ -147,7 +214,7 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             };
         });
 
-        // Transform edges - only show if connections are not hidden
+        // Transform edges - only show edges between visible nodes
         const flowEdges: Edge[] = edges.map((edge, index) => {
             const sourceNode = nodes.find(n => 
                 n.fullyQualifiedName === edge.fromEntity.fullyQualifiedName || 
@@ -163,11 +230,8 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             const sourceNodeId = sourceNode.fullyQualifiedName || sourceNode.id;
             const targetNodeId = targetNode.fullyQualifiedName || targetNode.id;
 
-            // Hide edge if source has downstream hidden or target has upstream hidden
-            const sourceDownstreamHidden = downstreamHidden.has(sourceNodeId);
-            const targetUpstreamHidden = upstreamHidden.has(targetNodeId);
-            
-            if (sourceDownstreamHidden || targetUpstreamHidden) {
+            // Hide edge if either source or target node is hidden (removed from canvas)
+            if (hiddenNodeIds.has(sourceNodeId) || hiddenNodeIds.has(targetNodeId)) {
                 return null;
             }
 
