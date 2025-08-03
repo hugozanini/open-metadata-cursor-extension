@@ -249,6 +249,10 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.js')
         );
 
+        const logoUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, 'assets', 'extension-logo.svg')
+        );
+
         // Use a nonce to only allow specific scripts to be run
         const nonce = getNonce();
 
@@ -284,6 +288,9 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             <script nonce="${nonce}">
                 console.log('Webview script starting...');
                 console.log('Script URI: ${scriptUri}');
+                
+                // Make logo URI available globally
+                window.extensionLogoUri = '${logoUri}';
                 
                 // Show loading message
                 setTimeout(() => {

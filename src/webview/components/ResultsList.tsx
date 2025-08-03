@@ -46,6 +46,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
                 <div className="welcome-state">
                     <h2>🎯 Discover Your Data with AI</h2>
                     <p>Search for tables, columns, or ask questions about your data catalog.</p>
+                    
                     <div className="feature-list">
                         <div className="feature-item">
                             <span className="feature-icon">🔍</span>

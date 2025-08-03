@@ -7,6 +7,7 @@ interface SearchInterfaceProps {
     onKeyPress: (event: React.KeyboardEvent) => void;
     loading: boolean;
     onExampleSearch: (query: string) => void;
+    compact?: boolean;
 }
 
 export const SearchInterface: React.FC<SearchInterfaceProps> = ({
@@ -15,7 +16,8 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
     onSearch,
     onKeyPress,
     loading,
-    onExampleSearch
+    onExampleSearch,
+    compact = false
 }) => {
     const exampleQueries = [
         'customer',
@@ -32,6 +34,23 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
         'How can I analyze sales?',
         'What user data is available?'
     ];
+
+    if (compact) {
+        return (
+            <div className="search-input-container-compact">
+                <input
+                    type="text"
+                    className="search-input-compact"
+                    value={searchQuery}
+                    onChange={(e) => onSearchQueryChange(e.target.value)}
+                    onKeyPress={onKeyPress}
+                    placeholder="Ask anything about your data"
+                    disabled={loading}
+                />
+                {loading && <div className="search-loading-indicator">🤖</div>}
+            </div>
+        );
+    }
 
     return (
         <div className="search-section">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AIInsights } from './components/AIInsights';
-import { ConfigStatus } from './components/ConfigStatus';
+import { ConnectionDots } from './components/ConnectionDots';
+import { DynamicSuggestions } from './components/DynamicSuggestions';
 import LineageModal from './components/Lineage/LineageModal';
 import { ResultsList } from './components/ResultsList';
 import { SearchInterface } from './components/SearchInterface';
@@ -159,23 +160,40 @@ export const App: React.FC = () => {
         }
     }, []);
 
+    const handleHomeClick = () => {
+        // Reset to home state
+        setSearchQuery('');
+        setResults([]);
+        setAiInsights('');
+        setError('');
+        setLoading(false);
+    };
+
+    // Check if dots should be shown (only when there's a problem)
+    const shouldShowDots = !config || !config.openmetadataUrl || !config.hasGeminiKey;
+    const headerClassName = `app-header-minimal ${shouldShowDots ? '' : 'no-dots'}`;
+
     return (
         <div className="app">
-            <header className="app-header">
-                <h1>🔍 OpenMetadata AI Explorer</h1>
-                <ConfigStatus config={config} />
-            </header>
+            <div className={headerClassName}>
+                <ConnectionDots config={config} onHomeClick={handleHomeClick} />
+                <div className="search-container-top">
+                    <SearchInterface
+                        searchQuery={searchQuery}
+                        onSearchQueryChange={setSearchQuery}
+                        onSearch={handleSearch}
+                        onKeyPress={handleKeyPress}
+                        loading={loading}
+                        onExampleSearch={handleExampleSearch}
+                        compact={true}
+                    />
+                    {searchQuery.trim() === '' && (
+                        <DynamicSuggestions onSuggestionClick={handleExampleSearch} />
+                    )}
+                </div>
+            </div>
 
             <main className="app-main">
-                <SearchInterface
-                    searchQuery={searchQuery}
-                    onSearchQueryChange={setSearchQuery}
-                    onSearch={handleSearch}
-                    onKeyPress={handleKeyPress}
-                    loading={loading}
-                    onExampleSearch={handleExampleSearch}
-                />
-
                 {error && (
                     <div className="error-message">
                         ❌ {error}

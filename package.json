@@ -1,6 +1,6 @@
 {
   "name": "openmetadata-ai-explorer",
-  "displayName": "OpenMetadata AI Explorer",
+  "displayName": "OpenMetadata",
   "description": "AI-powered data discovery for OpenMetadata",
   "version": "0.0.1",
   "engines": {
@@ -18,7 +18,7 @@
       "panel": [
         {
           "id": "openmetadataPanel",
-          "title": "OpenMetadata AI",
+          "title": "OPEN METADATA",
           "icon": "$(database)"
         }
       ]
@@ -33,7 +33,7 @@
       ]
     },
     "configuration": {
-      "title": "OpenMetadata AI Explorer",
+      "title": "OpenMetadata",
       "properties": {
         "openmetadataExplorer.geminiApiKey": {
           "type": "string",

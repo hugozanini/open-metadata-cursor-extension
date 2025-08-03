@@ -4,7 +4,7 @@
     font-size: var(--vscode-font-size);
     color: var(--vscode-foreground);
     background-color: var(--vscode-editor-background);
-    padding: 16px;
+    padding: 0;
     height: 100vh;
     overflow-y: auto;
 }
@@ -25,48 +25,164 @@
 .app-main {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
+    padding: 8px;
 }
 
-/* Configuration status */
-.config-status {
+/* Minimal Connection Dots */
+.connection-dots {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 12px;
-    opacity: 0.8;
+    gap: 6px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    margin-right: 8px;
+    align-items: center;
+    height: 32px;
 }
 
-.config-status.loading {
-    text-align: center;
-    color: var(--vscode-descriptionForeground);
+.connection-dots:hover {
+    background-color: var(--vscode-list-hoverBackground);
 }
 
-.config-item {
+.connection-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.connection-dot.connected {
+    background-color: var(--vscode-terminal-ansiGreen);
+    box-shadow: 0 0 6px rgba(0, 255, 0, 0.4);
+}
+
+.connection-dot.disconnected {
+    background-color: var(--vscode-terminal-ansiYellow);
+    box-shadow: 0 0 6px rgba(255, 255, 0, 0.3);
+}
+
+.connection-dot.loading {
+    background-color: var(--vscode-terminal-ansiYellow);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* Extension Logo */
+.extension-logo {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
+    height: 32px;
+    margin-right: 8px;
 }
 
-.config-label {
+.extension-logo:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.extension-logo img {
+    height: 32px;
+    width: auto;
+}
+
+/* Minimal Header Layout */
+.app-header-minimal {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background-color: var(--vscode-sideBar-background);
+}
+
+.search-container-top {
+    flex: 1;
+    margin-left: 4px;
+}
+
+/* When no dots are shown, remove left margin */
+.app-header-minimal.no-dots .search-container-top {
+    margin-left: 0;
+}
+
+/* Compact Search Input */
+.search-input-container-compact {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.search-input-compact {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    font-size: 13px;
+    font-family: var(--vscode-font-family);
+}
+
+.search-input-compact:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.search-input-compact::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+.search-loading-indicator {
+    position: absolute;
+    right: 8px;
     color: var(--vscode-descriptionForeground);
-    min-width: 100px;
+    font-size: 12px;
+    animation: pulse 1.5s ease-in-out infinite;
 }
 
-.config-value {
-    font-weight: 500;
+/* Dynamic Suggestions - Header */
+.dynamic-suggestions-header {
+    margin-top: 2px;
+    text-align: left;
 }
 
-.config-value.success {
-    color: var(--vscode-terminal-ansiGreen);
+.dynamic-suggestions-header .suggestion-text {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    min-height: 14px;
+    line-height: 1.2;
+    opacity: 0.7;
 }
 
-.config-value.warning {
-    color: var(--vscode-terminal-ansiYellow);
+.dynamic-suggestions-header .suggestion-text:hover {
+    color: var(--vscode-terminal-ansiBlue);
+    background-color: var(--vscode-list-hoverBackground);
+    opacity: 1;
+    transform: translateY(-1px);
 }
 
-.config-value.error {
-    color: var(--vscode-terminal-ansiRed);
+.dynamic-suggestions-header .suggestion-text.visible {
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
+.dynamic-suggestions-header .suggestion-text.hidden {
+    opacity: 0;
+    transform: translateY(3px);
 }
 
 /* Search interface */
