@@ -53,8 +53,8 @@ export interface LineageNodeData {
     isDownstream: boolean;
     hasUpstreamConnections?: boolean;
     hasDownstreamConnections?: boolean;
-    upstreamExpanded?: boolean;
-    downstreamExpanded?: boolean;
+    upstreamHidden?: boolean;
+    downstreamHidden?: boolean;
     canExpandUpstream?: boolean;
     canExpandDownstream?: boolean;
     onExpand?: (entity: EntityReference, direction: string) => void;
@@ -75,9 +75,10 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
     const [reactFlowEdges, setReactFlowEdges, onEdgesChange] = useEdgesState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
     
-    // Track expanded state for each direction per node
-    const [upstreamExpanded, setUpstreamExpanded] = useState<Set<string>>(new Set());
-    const [downstreamExpanded, setDownstreamExpanded] = useState<Set<string>>(new Set());
+    // Track which connections are hidden for each direction per node
+    // By default, all connections are visible (not in the hidden set)
+    const [upstreamHidden, setUpstreamHidden] = useState<Set<string>>(new Set());
+    const [downstreamHidden, setDownstreamHidden] = useState<Set<string>>(new Set());
 
     // Transform OpenMetadata lineage data to ReactFlow format
     const transformToReactFlowData = useCallback(() => {
@@ -111,17 +112,17 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                 (edge.fromEntity.fullyQualifiedName || edge.fromEntity.id) === nodeId
             );
             
-            // Check expanded state
-            const isUpstreamExpanded = upstreamExpanded.has(nodeId);
-            const isDownstreamExpanded = downstreamExpanded.has(nodeId);
+            // Check if connections are hidden
+            const isUpstreamHidden = upstreamHidden.has(nodeId);
+            const isDownstreamHidden = downstreamHidden.has(nodeId);
             
-            // Determine if this node can expand in each direction
-            // For non-center nodes:
-            // - Upstream side: can expand if it's upstream or center node (has potential upstream)
-            // - Downstream side: can expand if it's downstream or center node (has potential downstream)
-            // In a real implementation, this would come from the API indicating if more data is available
-            const canExpandUpstream = !isCenter && (isUpstream || !hasUpstreamConnections);
-            const canExpandDownstream = !isCenter && (isDownstream || !hasDownstreamConnections);
+            // Determine if this node can show expand/collapse buttons in each direction
+            // Show buttons only if:
+            // 1. Not the center node
+            // 2. Has connections in that direction (either visible or hidden)
+            // 3. OR could potentially have connections (for leaf nodes that might expand)
+            const canExpandUpstream = !isCenter && (hasUpstreamConnections || (!hasUpstreamConnections && isUpstream));
+            const canExpandDownstream = !isCenter && (hasDownstreamConnections || (!hasDownstreamConnections && isDownstream));
 
             return {
                 id: node.id,
@@ -134,8 +135,8 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     isDownstream: !isCenter && isDownstream,
                     hasUpstreamConnections,
                     hasDownstreamConnections,
-                    upstreamExpanded: isUpstreamExpanded,
-                    downstreamExpanded: isDownstreamExpanded,
+                    upstreamHidden: isUpstreamHidden,
+                    downstreamHidden: isDownstreamHidden,
                     canExpandUpstream,
                     canExpandDownstream,
                     onExpand: handleExpand,
@@ -146,24 +147,34 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             };
         });
 
-        // Transform edges
+        // Transform edges - only show if connections are not hidden
         const flowEdges: Edge[] = edges.map((edge, index) => {
-            const sourceNodeId = nodes.find(n => 
+            const sourceNode = nodes.find(n => 
                 n.fullyQualifiedName === edge.fromEntity.fullyQualifiedName || 
                 n.id === edge.fromEntity.id
-            )?.id;
-
-            const targetNodeId = nodes.find(n => 
+            );
+            const targetNode = nodes.find(n => 
                 n.fullyQualifiedName === edge.toEntity.fullyQualifiedName || 
                 n.id === edge.toEntity.id
-            )?.id;
+            );
 
-            if (!sourceNodeId || !targetNodeId) return null;
+            if (!sourceNode || !targetNode) return null;
+
+            const sourceNodeId = sourceNode.fullyQualifiedName || sourceNode.id;
+            const targetNodeId = targetNode.fullyQualifiedName || targetNode.id;
+
+            // Hide edge if source has downstream hidden or target has upstream hidden
+            const sourceDownstreamHidden = downstreamHidden.has(sourceNodeId);
+            const targetUpstreamHidden = upstreamHidden.has(targetNodeId);
+            
+            if (sourceDownstreamHidden || targetUpstreamHidden) {
+                return null;
+            }
 
             return {
                 id: `edge-${index}`,
-                source: sourceNodeId,
-                target: targetNodeId,
+                source: sourceNode.id,
+                target: targetNode.id,
                 type: 'customEdge', // Use our custom curved edge
                 animated: false,
                 markerEnd: {
@@ -186,7 +197,7 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             setReactFlowEdges(flowEdges);
         });
 
-    }, [nodes, edges, centerNodeFqn, setReactFlowNodes, setReactFlowEdges]);
+    }, [nodes, edges, centerNodeFqn, upstreamHidden, downstreamHidden, handleExpand, handleCollapse, handleNodeClick, setReactFlowNodes, setReactFlowEdges]);
 
     // Transform data when props change
     useEffect(() => {
@@ -229,14 +240,22 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
         const nodeId = entity.fullyQualifiedName || entity.id;
         console.log('Expanding', direction, 'for entity:', entity.name);
         
-        // Add to expanded state (+ becomes -)
+        // Expand means show hidden connections (remove from hidden set)
         if (direction === 'upstream') {
-            setUpstreamExpanded(prev => new Set(prev).add(nodeId));
+            setUpstreamHidden(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(nodeId);
+                return newSet;
+            });
         } else if (direction === 'downstream') {
-            setDownstreamExpanded(prev => new Set(prev).add(nodeId));
+            setDownstreamHidden(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(nodeId);
+                return newSet;
+            });
         }
         
-        // Request additional data from parent component
+        // Request additional data from parent component (for potential new connections)
         onExpandNode?.(nodeId, direction);
     }, [onExpandNode]);
 
@@ -244,19 +263,11 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
         const nodeId = entity.fullyQualifiedName || entity.id;
         console.log('Collapsing', direction, 'for entity:', entity.name);
         
-        // Remove from expanded state (- becomes +)
+        // Collapse means hide visible connections (add to hidden set)
         if (direction === 'upstream') {
-            setUpstreamExpanded(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(nodeId);
-                return newSet;
-            });
+            setUpstreamHidden(prev => new Set(prev).add(nodeId));
         } else if (direction === 'downstream') {
-            setDownstreamExpanded(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(nodeId);
-                return newSet;
-            });
+            setDownstreamHidden(prev => new Set(prev).add(nodeId));
         }
         
         // Notify parent component

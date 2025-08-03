@@ -16,8 +16,10 @@ export enum LineageDirection {
 }
 
 interface ExpandCollapseButtonsProps {
-    upstreamExpanded?: boolean;
-    downstreamExpanded?: boolean;
+    hasUpstreamConnections?: boolean;
+    hasDownstreamConnections?: boolean;
+    upstreamHidden?: boolean;
+    downstreamHidden?: boolean;
     canExpandUpstream?: boolean;
     canExpandDownstream?: boolean;
     onExpand?: (direction: LineageDirection) => void;
@@ -39,8 +41,10 @@ const MinusIcon: React.FC = () => (
 );
 
 const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
-    upstreamExpanded = false,
-    downstreamExpanded = false,
+    hasUpstreamConnections = false,
+    hasDownstreamConnections = false,
+    upstreamHidden = false,
+    downstreamHidden = false,
     canExpandUpstream = false,
     canExpandDownstream = false,
     onExpand,
@@ -70,14 +74,24 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
         <>
             {/* Upstream buttons (left side) */}
             {canExpandUpstream && (
-                upstreamExpanded ? (
-                    <button
-                        className="lineage-collapse-button upstream"
-                        onClick={handleCollapseUpstream}
-                        title="Collapse upstream datasets"
-                    >
-                        <MinusIcon />
-                    </button>
+                hasUpstreamConnections ? (
+                    upstreamHidden ? (
+                        <button
+                            className="lineage-expand-button upstream"
+                            onClick={handleExpandUpstream}
+                            title="Show upstream datasets"
+                        >
+                            <PlusIcon />
+                        </button>
+                    ) : (
+                        <button
+                            className="lineage-collapse-button upstream"
+                            onClick={handleCollapseUpstream}
+                            title="Hide upstream datasets"
+                        >
+                            <MinusIcon />
+                        </button>
+                    )
                 ) : (
                     <button
                         className="lineage-expand-button upstream"
@@ -91,14 +105,24 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
 
             {/* Downstream buttons (right side) */}
             {canExpandDownstream && (
-                downstreamExpanded ? (
-                    <button
-                        className="lineage-collapse-button downstream"
-                        onClick={handleCollapseDownstream}
-                        title="Collapse downstream datasets"
-                    >
-                        <MinusIcon />
-                    </button>
+                hasDownstreamConnections ? (
+                    downstreamHidden ? (
+                        <button
+                            className="lineage-expand-button downstream"
+                            onClick={handleExpandDownstream}
+                            title="Show downstream datasets"
+                        >
+                            <PlusIcon />
+                        </button>
+                    ) : (
+                        <button
+                            className="lineage-collapse-button downstream"
+                            onClick={handleCollapseDownstream}
+                            title="Hide downstream datasets"
+                        >
+                            <MinusIcon />
+                        </button>
+                    )
                 ) : (
                     <button
                         className="lineage-expand-button downstream"
