@@ -23,6 +23,7 @@ import 'reactflow/dist/style.css';
 
 import { EdgeDetails, EntityReference } from '../../../services/LineageService';
 import CustomEdge from './CustomEdge';
+import LayersPanel from './LayersPanel';
 import LineageNode from './LineageNode';
 import { layoutNodes } from './LineageUtils';
 
@@ -49,6 +50,8 @@ export interface LineageNodeData {
     isCenter: boolean;
     isUpstream: boolean;
     isDownstream: boolean;
+    onExpand?: (entity: EntityReference, direction: string) => void;
+    onCollapse?: (entity: EntityReference, direction: string) => void;
 }
 
 const LineageViewer: React.FC<LineageViewerProps> = ({
@@ -95,6 +98,8 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     isCenter,
                     isUpstream: !isCenter && isUpstream,
                     isDownstream: !isCenter && isDownstream,
+                    onExpand: handleExpand,
+                    onCollapse: handleCollapse,
                 },
                 sourcePosition: Position.Right,
                 targetPosition: Position.Left,
@@ -179,6 +184,23 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
         [onNodeClick]
     );
 
+    // Handle expand/collapse actions
+    const handleExpand = useCallback((entity: EntityReference, direction: string) => {
+        console.log('Expanding', direction, 'for entity:', entity.name);
+        // TODO: Implement actual expand logic
+    }, []);
+
+    const handleCollapse = useCallback((entity: EntityReference, direction: string) => {
+        console.log('Collapsing', direction, 'for entity:', entity.name);
+        // TODO: Implement actual collapse logic  
+    }, []);
+
+    // Handle layer toggle
+    const handleLayerToggle = useCallback((layerType: string, enabled: boolean) => {
+        console.log('Layer toggle:', layerType, enabled ? 'enabled' : 'disabled');
+        // TODO: Implement actual layer filtering logic
+    }, []);
+
     if (loading) {
         return (
             <div className="lineage-viewer loading">
@@ -242,6 +264,9 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     />
                     <Background gap={12} size={1} />
                 </ReactFlow>
+                
+                {/* Layers Panel */}
+                <LayersPanel onLayerToggle={handleLayerToggle} />
             </div>
         </div>
     );

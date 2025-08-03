@@ -845,6 +845,180 @@
     background: var(--vscode-focusBorder);
 }
 
+/* Expand/Collapse Buttons - OpenMetadata Style */
+.lineage-expand-button,
+.lineage-collapse-button {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 50%;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.lineage-expand-button:hover,
+.lineage-collapse-button:hover {
+    border-color: var(--vscode-focusBorder);
+    background: var(--vscode-list-hoverBackground);
+    transform: scale(1.1);
+}
+
+/* Positioning for expand/collapse buttons */
+.lineage-expand-button.upstream,
+.lineage-collapse-button.upstream {
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lineage-expand-button.downstream,
+.lineage-collapse-button.downstream {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lineage-expand-button.upstream:hover,
+.lineage-collapse-button.upstream:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+.lineage-expand-button.downstream:hover,
+.lineage-collapse-button.downstream:hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Collapsible Layers Panel - OpenMetadata Popover Style */
+.layers-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+/* Main Layers Trigger Button */
+.layers-trigger-button {
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--vscode-foreground);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-width: 80px;
+}
+
+.layers-trigger-button:hover {
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.layers-trigger-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.layers-trigger-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Popover Content */
+.layers-popover {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    min-width: 120px;
+    animation: popover-appear 0.2s ease-out;
+}
+
+@keyframes popover-appear {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Layer Buttons in Popover */
+.layer-button {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--vscode-foreground);
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.layer-button:last-child {
+    margin-bottom: 0;
+}
+
+.layer-button:hover:not(.disabled) {
+    background: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-panel-border);
+}
+
+.layer-button.active {
+    background: var(--vscode-list-activeSelectionBackground);
+    border-color: var(--vscode-focusBorder);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.layer-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.layer-button-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.layer-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.layer-label {
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 /* OpenMetadata-style Node Content */
 .node-content {
     display: flex;

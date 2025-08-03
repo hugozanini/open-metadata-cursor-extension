@@ -10,12 +10,13 @@
 
 import React, { useMemo } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
+import ExpandCollapseButtons from './ExpandCollapseButtons';
 import { LineageNodeData } from './LineageViewer';
 
 const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
     if (!data || !data.entity) return null;
 
-    const { entity, isCenter } = data;
+    const { entity, isCenter, onExpand, onCollapse } = data;
 
     // Get breadcrumb path - simplified version
     const getBreadcrumbPath = useMemo(() => {
@@ -82,7 +83,29 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
                 </div>
             </div>
 
-            {/* Future: Expand/collapse controls will go here */}
+            {/* Expand/Collapse Buttons */}
+            <ExpandCollapseButtons
+                hasUpstream={true}
+                hasDownstream={true}
+                canExpandUpstream={!isCenter}
+                canExpandDownstream={!isCenter}
+                onExpand={(direction) => onExpand?.(entity, direction)}
+                onCollapse={(direction) => onCollapse?.(entity, direction)}
+            />
+
+            {/* React Flow Handles */}
+            <Handle
+                type="target"
+                position={Position.Left}
+                className="node-handle"
+                isConnectable={false}
+            />
+            <Handle
+                type="source"
+                position={Position.Right}
+                className="node-handle"
+                isConnectable={false}
+            />
         </div>
     );
 };
