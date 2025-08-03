@@ -8,7 +8,7 @@
  * https://github.com/open-metadata/OpenMetadata/blob/main/openmetadata-ui/src/main/resources/ui/src/components/Entity/EntityLineage/LineageLayers/LineageLayers.tsx
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface LayerButtonProps {
     isActive: boolean;
@@ -55,20 +55,15 @@ const DataQualityIcon: React.FC = () => (
     </svg>
 );
 
-const ServiceIcon: React.FC = () => (
+// Column icon for column-level lineage
+const ColumnIcon: React.FC = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-    </svg>
-);
-
-const DomainIcon: React.FC = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
     </svg>
 );
 
 const LayersPanel: React.FC<LayersPanelProps> = ({ onLayerToggle }) => {
-    const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set(['basic']));
+    const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set()); // No default selection
     const [isExpanded, setIsExpanded] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
 
@@ -121,32 +116,17 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ onLayerToggle }) => {
             {isExpanded && (
                 <div className="layers-popover">
                     <LayerButton
-                        isActive={activeLayers.has('basic')}
-                        onClick={() => handleLayerToggle('basic')}
-                        icon={<LayersIcon />}
-                        label="Basic"
+                        isActive={activeLayers.has('column')}
+                        onClick={() => handleLayerToggle('column')}
+                        icon={<ColumnIcon />}
+                        label="Column"
                     />
                     
                     <LayerButton
-                        isActive={activeLayers.has('dataQuality')}
-                        onClick={() => handleLayerToggle('dataQuality')}
+                        isActive={activeLayers.has('observability')}
+                        onClick={() => handleLayerToggle('observability')}
                         icon={<DataQualityIcon />}
                         label="Observability"
-                    />
-                    
-                    <LayerButton
-                        isActive={activeLayers.has('services')}
-                        onClick={() => handleLayerToggle('services')}
-                        icon={<ServiceIcon />}
-                        label="Service"
-                    />
-                    
-                    <LayerButton
-                        isActive={activeLayers.has('domains')}
-                        onClick={() => handleLayerToggle('domains')}
-                        icon={<DomainIcon />}
-                        label="Domain"
-                        disabled={true}
                     />
                 </div>
             )}
