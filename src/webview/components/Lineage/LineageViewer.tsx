@@ -7,21 +7,21 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
-    Node,
-    Edge,
-    Controls,
-    MiniMap,
     Background,
-    useNodesState,
-    useEdgesState,
     ConnectionMode,
-    ReactFlowInstance,
+    Controls,
+    Edge,
     MarkerType,
+    MiniMap,
+    Node,
     Position,
+    ReactFlowInstance,
+    useEdgesState,
+    useNodesState,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-import { EntityReference, EdgeDetails } from '../../../services/LineageService';
+import { EdgeDetails, EntityReference } from '../../../services/LineageService';
 import LineageNode from './LineageNode';
 import { layoutNodes } from './LineageUtils';
 

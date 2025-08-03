@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { GeminiService } from './services/GeminiService';
-import { OpenMetadataService } from './services/OpenMetadataService';
 import { LineageService } from './services/LineageService';
+import { OpenMetadataService } from './services/OpenMetadataService';
 
 export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'openmetadataExplorer';
@@ -205,12 +205,32 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     color: var(--vscode-foreground);
                     background-color: var(--vscode-editor-background);
                     margin: 0;
-                    padding: 0;
+                    padding: 10px;
+                }
+                .loading {
+                    text-align: center;
+                    padding: 20px;
                 }
             </style>
         </head>
         <body>
+            <div class="loading">
+                <h2>🔍 OpenMetadata AI Explorer</h2>
+                <p>Loading...</p>
+            </div>
             <div id="root"></div>
+            <script nonce="${nonce}">
+                console.log('Webview script starting...');
+                console.log('Script URI: ${scriptUri}');
+                
+                // Show loading message
+                setTimeout(() => {
+                    const loading = document.querySelector('.loading');
+                    if (loading && !document.querySelector('.app')) {
+                        loading.innerHTML = '<h2>⚠️ Loading Failed</h2><p>Check the developer console for errors.</p>';
+                    }
+                }, 5000);
+            </script>
             <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>
         </html>`;

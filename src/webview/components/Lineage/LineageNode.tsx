@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, NodeProps, Position } from 'reactflow';
 import { LineageNodeData } from './LineageViewer';
 
 const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {

@@ -5,8 +5,8 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import ELK, { ElkNode, ElkExtendedEdge } from 'elkjs/lib/elk.bundled.js';
-import { Node, Edge } from 'reactflow';
+import ELK, { ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk.bundled.js';
+import { Edge, Node } from 'reactflow';
 import { LineageNodeData } from './LineageViewer';
 
 // Initialize ELK layout engine

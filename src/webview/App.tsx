@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { AIInsights } from './components/AIInsights';
 import { ConfigStatus } from './components/ConfigStatus';
+import LineageModal from './components/Lineage/LineageModal';
 import { ResultsList } from './components/ResultsList';
 import { SearchInterface } from './components/SearchInterface';
-import LineageModal from './components/Lineage/LineageModal';
 import './styles.css';
 
 // VS Code API type
@@ -30,8 +30,22 @@ interface Config {
     hasAuthToken: boolean;
 }
 
+// Global VS Code API instance to avoid multiple acquisitions
+declare global {
+    interface Window {
+        vscodeApi?: any;
+    }
+}
+
+const getVsCodeApi = () => {
+    if (!window.vscodeApi) {
+        window.vscodeApi = acquireVsCodeApi();
+    }
+    return window.vscodeApi;
+};
+
 export const App: React.FC = () => {
-    const [vscode] = useState(() => acquireVsCodeApi());
+    const [vscode] = useState(() => getVsCodeApi());
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState<TableResult[]>([]);
     const [aiInsights, setAiInsights] = useState('');
@@ -136,6 +150,14 @@ export const App: React.FC = () => {
             tableName: '',
         });
     };
+
+    // Hide loading message when React app mounts
+    useEffect(() => {
+        const loading = document.querySelector('.loading');
+        if (loading) {
+            loading.style.display = 'none';
+        }
+    }, []);
 
     return (
         <div className="app">

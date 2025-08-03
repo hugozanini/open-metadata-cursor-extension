@@ -5,12 +5,16 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
-import LineageViewer from './LineageViewer';
+import React, { useCallback, useEffect, useState } from 'react';
 import { EntityReference } from '../../../services/LineageService';
+import LineageViewer from './LineageViewer';
 
-// VS Code API type
-declare const acquireVsCodeApi: () => any;
+// Use the global VS Code API instance from App.tsx
+declare global {
+    interface Window {
+        vscodeApi?: any;
+    }
+}
 
 export interface LineageModalProps {
     tableFqn: string;
@@ -25,7 +29,8 @@ const LineageModal: React.FC<LineageModalProps> = ({
     isOpen,
     onClose,
 }) => {
-    const [vscode] = useState(() => acquireVsCodeApi());
+    // Use the global VS Code API instance
+    const vscode = window.vscodeApi;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lineageData, setLineageData] = useState<{
@@ -36,12 +41,12 @@ const LineageModal: React.FC<LineageModalProps> = ({
 
     // Fetch lineage data when modal opens
     const fetchLineageData = useCallback(() => {
-        if (!tableFqn || !isOpen) return;
+        if (!tableFqn || !isOpen || !vscode) return;
 
         setLoading(true);
         setError(null);
 
-        // Request lineage data from the extension backend
+        // Request lineage data from the extension backend  
         vscode.postMessage({
             type: 'getLineage',
             tableFqn: tableFqn,
