@@ -42,11 +42,14 @@ A big part of the data development journey is to:
 5. **Understand data flow** through interactive visualization
 6. **Continue coding** with the right data understanding
 
-### Key UX Principles
+### Key UX Principles (Enhanced v1.0)
 - **Minimal friction**: Quick access in bottom panel next to terminal
-- **Conversational**: Natural language interaction like Cursor chat
+- **Ultra-compact design**: Maximized screen real estate with minimal spacing
+- **Smart status indication**: Logo when connected, warning dots when issues
+- **Conversational**: Natural language interaction like Cursor chat with dynamic suggestions
 - **Progressive disclosure**: Start with overview, drill down as needed
-- **Visual clarity**: Clean, VS Code-themed interface
+- **Professional aesthetics**: Clean, VS Code-native interface with minimalist design language
+- **Home button functionality**: Logo click provides quick reset to clean state
 
 ## Target Audience
 

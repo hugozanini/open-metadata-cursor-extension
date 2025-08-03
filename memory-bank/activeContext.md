@@ -1,14 +1,24 @@
 # Active Context - Current Development State
 
 ## Current Work Focus
-**Phase**: v1.0 Complete - Table-Level Lineage Visualization
-**Branch**: `main` (feature merged successfully)
-**Status**: ✅ Core lineage functionality complete and battle-tested
+**Phase**: v1.0 Enhanced - Professional UI with Minimalist Design
+**Branch**: `main` (UI improvements merged successfully)
+**Status**: ✅ Core functionality complete + Major UI improvements implemented
 
-## Recent Major Accomplishment
+## Recent Major Accomplishments
 **🎉 LINEAGE VISUALIZATION v1.0 COMPLETED AND MERGED TO MAIN**
 
 The lineage feature has been fully implemented, extensively debugged, and merged to main branch with comprehensive documentation. All critical issues have been resolved and the feature is production-ready for table-level lineage.
+
+**✨ MAJOR UI IMPROVEMENTS v1.0 COMPLETED AND MERGED TO MAIN**
+
+Implemented professional, minimalist UI design optimized for VS Code horizontal panel usage with:
+- Smart logo/connection status system (logo when connected, dots when issues)
+- Ultra-compact layout with minimal spacing for maximum screen efficiency
+- Dynamic query suggestions with elegant fade transitions
+- Home button functionality via logo click
+- Updated VS Code tab branding to "OPEN METADATA"
+- Professional visual design matching VS Code native aesthetics
 
 ## Recent Changes (Latest Development Sessions)
 
@@ -31,6 +41,44 @@ The lineage feature has been fully implemented, extensively debugged, and merged
 - `src/webview/components/Lineage/ExpandCollapseButtons.tsx` - Interactive controls
 - `src/webview/components/Lineage/CustomEdge.tsx` - Styled graph edges
 - `src/webview/components/Lineage/LineageUtils.ts` - Utility functions
+
+### ✨ Major UI Improvements Implementation ✅
+
+#### 1. Minimalist Header Design System
+**Achievement**: Complete header redesign for professional VS Code integration
+**Implementation**:
+- ConnectionDots component with smart logo/status display
+- Extension logo appears when both OpenMetadata and Gemini connected
+- Yellow dots show when services disconnected (hover for info, click for GitHub)
+- Logo acts as home button to reset application state
+- Ultra-compact padding/margins for maximum space efficiency
+
+**Files Created/Modified**:
+- `src/webview/components/ConnectionDots.tsx` - Smart status indicator component
+- `src/webview/components/DynamicSuggestions.tsx` - Rotating query suggestions
+- `assets/extension-logo.svg` - Extension logo asset
+- `src/OpenMetadataExplorerProvider.ts` - Logo URI handling for webview security
+- `src/webview/App.tsx` - Integrated new components and home functionality
+- `src/webview/styles.css` - Complete layout overhaul with minimal spacing
+- `package.json` - Updated VS Code tab name to "OPEN METADATA"
+
+#### 2. Enhanced Search Experience
+**Achievement**: Professional search interface with dynamic suggestions
+**Implementation**:
+- Compact search bar with "Ask anything about your data" placeholder
+- Dynamic suggestions rotating every 5 seconds with fade transitions
+- Left-aligned suggestion text for better readability
+- Suggestions appear only when search is empty (clean interface)
+- Home button functionality resets all application state
+
+#### 3. Space Optimization & Professional Design
+**Achievement**: Maximized screen real estate for VS Code horizontal panel
+**Implementation**:
+- Reduced all padding/margins to absolute minimum (2px-8px spacing)
+- Logo/dots at 32px height with minimal surrounding space
+- Search bar positioned immediately adjacent to status indicator
+- Dynamic suggestions with minimal vertical spacing
+- Entire interface optimized for narrow horizontal panel constraints
 
 ### 🔧 Critical Bug Fixes & Logic Improvements ✅
 
@@ -146,9 +194,37 @@ Users need to set these VS Code settings:
 6. **Parent-Child Logic**: Downstream nodes can't disconnect from upstream parents
 7. **Example Queries**: Mix of natural language and keyword examples
 
-## Next Steps - v2.0 Development Phase
+## Next Steps - Continuing UI Enhancement & v2.0 Development
 
-### 🎯 HIGH PRIORITY: Column-Level Lineage
+### 🎯 IMMEDIATE PRIORITY: Complete UI Improvements (Phase 2 of 5)
+**Status**: Currently completed phases 1-2 of 5-phase UI improvement plan
+**Completed**: 
+- ✅ Status/connection indicator redesign (minimalist logo/dots system)
+- ✅ Search interface redesign (compact bar with dynamic suggestions)
+
+**Remaining UI Improvements**:
+3. **AI Results Overview Redesign** (Next Priority)
+   - Streamlined AI insights display with better visual hierarchy
+   - Improved typography and spacing for AI responses
+   - Enhanced streaming animation and response formatting
+   - Better integration with overall minimalist design
+
+4. **Search Results Tables Enhancement** (High Priority)
+   - Redesigned table cards with cleaner, more compact layout
+   - Improved metadata display and hierarchy
+   - Better use of horizontal space in cards
+   - Enhanced table card interactions and hover states
+
+5. **Lineage Improvements** (Final Phase)
+   - Refined lineage modal design for better VS Code integration
+   - Enhanced node styling and compact information display
+   - Improved graph controls and navigation elements
+   - Better responsive design for various screen sizes
+
+### 🎯 FUTURE MAJOR FEATURES: v2.0 Development Phase
+**After UI improvements complete**
+
+#### Column-Level Lineage
 **Goal**: Show relationships between specific table columns
 **Implementation Required**:
 - Enhanced OpenMetadata API calls for column lineage
@@ -156,7 +232,7 @@ Users need to set these VS Code settings:
 - Column-to-column edge visualization
 - Expandable column details within nodes
 
-### 🎯 HIGH PRIORITY: Observability Layer
+#### Observability Layer
 **Goal**: Display data quality metrics, pipeline runs, monitoring information
 **Implementation Required**:
 - Integration with OpenMetadata profiler and data quality APIs
