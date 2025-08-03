@@ -43,6 +43,7 @@ const LineageModal: React.FC<LineageModalProps> = ({
     const fetchLineageData = useCallback(() => {
         if (!tableFqn || !isOpen || !vscode) return;
 
+        console.log('Fetching lineage data for:', tableFqn);
         setLoading(true);
         setError(null);
 
@@ -64,12 +65,14 @@ const LineageModal: React.FC<LineageModalProps> = ({
             
             switch (message.type) {
                 case 'lineageData':
+                    console.log('Received lineage data:', message.lineageData);
                     setLoading(false);
                     setLineageData(message.lineageData);
                     setError(null);
                     break;
                     
                 case 'lineageError':
+                    console.log('Lineage error:', message.error);
                     setLoading(false);
                     setError(message.error);
                     setLineageData(null);

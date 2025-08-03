@@ -10,7 +10,7 @@ import { Handle, NodeProps, Position } from 'reactflow';
 import { LineageNodeData } from './LineageViewer';
 
 const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
-    if (!data) return null;
+    if (!data || !data.entity) return null;
 
     const { entity, isCenter, isUpstream, isDownstream } = data;
 
@@ -34,7 +34,9 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
     };
 
     // Get entity type icon
-    const getEntityIcon = (entityType: string) => {
+    const getEntityIcon = (entityType: string | undefined) => {
+        if (!entityType) return '📄';
+        
         switch (entityType.toLowerCase()) {
             case 'table':
                 return '🗂️';
@@ -57,11 +59,19 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
 
     // Format entity name for display
     const getDisplayName = () => {
-        return entity.displayName || entity.name || entity.fullyQualifiedName.split('.').pop() || 'Unknown';
+        if (entity.displayName) return entity.displayName;
+        if (entity.name) return entity.name;
+        if (entity.fullyQualifiedName) {
+            const parts = entity.fullyQualifiedName.split('.');
+            return parts.pop() || 'Unknown';
+        }
+        return 'Unknown';
     };
 
     // Get service name from FQN
     const getServiceName = () => {
+        if (!entity.fullyQualifiedName) return '';
+        
         const parts = entity.fullyQualifiedName.split('.');
         return parts.length > 1 ? parts[0] : '';
     };
@@ -85,12 +95,12 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
                     {getEntityIcon(entity.type)}
                 </span>
                 <span className="entity-type">
-                    {entity.type.toUpperCase()}
+                    {entity.type ? entity.type.toUpperCase() : 'UNKNOWN'}
                 </span>
             </div>
 
             <div className="node-body">
-                <div className="entity-name" title={entity.fullyQualifiedName}>
+                <div className="entity-name" title={entity.fullyQualifiedName || entity.name || 'Unknown entity'}>
                     {getDisplayName()}
                 </div>
                 
