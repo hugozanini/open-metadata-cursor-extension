@@ -42,6 +42,8 @@ export interface LineageViewerProps {
     loading?: boolean;
     onNodeClick?: (node: EntityReference) => void;
     onClose?: () => void;
+    onExpandNode?: (nodeId: string, direction: string) => void;
+    onCollapseNode?: (nodeId: string, direction: string) => void;
 }
 
 export interface LineageNodeData {
@@ -49,6 +51,12 @@ export interface LineageNodeData {
     isCenter: boolean;
     isUpstream: boolean;
     isDownstream: boolean;
+    hasUpstreamConnections?: boolean;
+    hasDownstreamConnections?: boolean;
+    upstreamExpandPerformed?: boolean;
+    downstreamExpandPerformed?: boolean;
+    hasMoreUpstream?: boolean;
+    hasMoreDownstream?: boolean;
     onExpand?: (entity: EntityReference, direction: string) => void;
     onCollapse?: (entity: EntityReference, direction: string) => void;
 }
@@ -60,10 +68,18 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
     loading = false,
     onNodeClick,
     onClose,
+    onExpandNode,
+    onCollapseNode,
 }) => {
     const [reactFlowNodes, setReactFlowNodes, onNodesChange] = useNodesState<LineageNodeData>([]);
     const [reactFlowEdges, setReactFlowEdges, onEdgesChange] = useEdgesState([]);
     const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+    
+    // Track expanded/collapsed nodes and expand state
+    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+    const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
+    const [upstreamExpandPerformed, setUpstreamExpandPerformed] = useState<Set<string>>(new Set());
+    const [downstreamExpandPerformed, setDownstreamExpandPerformed] = useState<Set<string>>(new Set());
 
     // Transform OpenMetadata lineage data to ReactFlow format
     const transformToReactFlowData = useCallback(() => {
@@ -87,6 +103,24 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
             const isCenter = node.fullyQualifiedName === centerNodeFqn;
             const isDownstream = downstreamMap.has(node.fullyQualifiedName);
             const isUpstream = upstreamMap.has(node.fullyQualifiedName);
+            
+            // Determine actual connections for this node
+            const nodeId = node.fullyQualifiedName || node.id;
+            const hasUpstreamConnections = edges.some(edge => 
+                (edge.toEntity.fullyQualifiedName || edge.toEntity.id) === nodeId
+            );
+            const hasDownstreamConnections = edges.some(edge => 
+                (edge.fromEntity.fullyQualifiedName || edge.fromEntity.id) === nodeId
+            );
+            
+            // Check expand/collapse state
+            const upstreamExpanded = upstreamExpandPerformed.has(nodeId);
+            const downstreamExpanded = downstreamExpandPerformed.has(nodeId);
+            
+            // For simplicity, assume leaf nodes (no connections) can potentially be expanded
+            // In a real implementation, this would come from the API indicating if more data is available
+            const hasMoreUpstream = !hasUpstreamConnections && !upstreamExpanded;
+            const hasMoreDownstream = !hasDownstreamConnections && !downstreamExpanded;
 
             return {
                 id: node.id,
@@ -97,6 +131,12 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     isCenter,
                     isUpstream: !isCenter && isUpstream,
                     isDownstream: !isCenter && isDownstream,
+                    hasUpstreamConnections,
+                    hasDownstreamConnections,
+                    upstreamExpandPerformed: upstreamExpanded,
+                    downstreamExpandPerformed: downstreamExpanded,
+                    hasMoreUpstream,
+                    hasMoreDownstream,
                     onExpand: handleExpand,
                     onCollapse: handleCollapse,
                 },
@@ -185,14 +225,42 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
 
     // Handle expand/collapse actions
     const handleExpand = useCallback((entity: EntityReference, direction: string) => {
+        const nodeId = entity.fullyQualifiedName || entity.id;
         console.log('Expanding', direction, 'for entity:', entity.name);
-        // TODO: Implement actual expand logic
-    }, []);
+        
+        // Track which direction was expanded
+        if (direction === 'upstream') {
+            setUpstreamExpandPerformed(prev => new Set(prev).add(nodeId));
+        } else if (direction === 'downstream') {
+            setDownstreamExpandPerformed(prev => new Set(prev).add(nodeId));
+        }
+        
+        // Request additional data from parent component
+        onExpandNode?.(nodeId, direction);
+    }, [onExpandNode]);
 
     const handleCollapse = useCallback((entity: EntityReference, direction: string) => {
+        const nodeId = entity.fullyQualifiedName || entity.id;
         console.log('Collapsing', direction, 'for entity:', entity.name);
-        // TODO: Implement actual collapse logic  
-    }, []);
+        
+        // Reset expand state for the direction
+        if (direction === 'upstream') {
+            setUpstreamExpandPerformed(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(nodeId);
+                return newSet;
+            });
+        } else if (direction === 'downstream') {
+            setDownstreamExpandPerformed(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(nodeId);
+                return newSet;
+            });
+        }
+        
+        // Notify parent component
+        onCollapseNode?.(nodeId, direction);
+    }, [onCollapseNode]);
 
     // Handle layer toggle
     const handleLayerToggle = useCallback((layerType: string, enabled: boolean) => {

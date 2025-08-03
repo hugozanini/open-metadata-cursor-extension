@@ -59,6 +59,12 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 case 'getLineage':
                     await this.handleGetLineage(data.tableFqn, data.entityType);
                     break;
+                case 'expandLineage':
+                    await this.handleExpandLineage(data.tableFqn, data.nodeId, data.direction, data.entityType);
+                    break;
+                case 'collapseLineage':
+                    await this.handleCollapseLineage(data.tableFqn, data.nodeId, data.direction);
+                    break;
                 case 'error':
                     vscode.window.showErrorMessage(data.message);
                     break;
@@ -159,6 +165,52 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 error: error instanceof Error ? error.message : 'Failed to load lineage data'
             });
         }
+    }
+
+    private async handleExpandLineage(tableFqn: string, nodeId: string, direction: string, entityType: string = 'table') {
+        if (!this._view) return;
+
+        try {
+            console.log(`Expanding lineage for node ${nodeId} in direction ${direction}`);
+            
+            // Get additional lineage data for the specific node
+            const expandedData = await this.lineageService.getSimpleLineage(nodeId, entityType, 2);
+            
+            // Send expanded data to webview to be merged
+            this._view.webview.postMessage({
+                type: 'expandedLineageData',
+                tableFqn: tableFqn,
+                nodeId: nodeId,
+                direction: direction,
+                expandedData: expandedData
+            });
+
+        } catch (error) {
+            console.error('Expand lineage error:', error);
+            
+            // If there's no additional data, send an empty response
+            this._view.webview.postMessage({
+                type: 'expandedLineageData',
+                tableFqn: tableFqn,
+                nodeId: nodeId,
+                direction: direction,
+                expandedData: { nodes: [], edges: [], centerNode: null }
+            });
+        }
+    }
+
+    private async handleCollapseLineage(tableFqn: string, nodeId: string, direction: string) {
+        if (!this._view) return;
+
+        console.log(`Collapsing lineage for node ${nodeId} in direction ${direction}`);
+        
+        // Send collapse confirmation to webview
+        this._view.webview.postMessage({
+            type: 'collapsedLineage',
+            tableFqn: tableFqn,
+            nodeId: nodeId,
+            direction: direction
+        });
     }
 
     private async sendConfig() {

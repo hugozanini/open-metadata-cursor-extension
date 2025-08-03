@@ -20,6 +20,8 @@ interface ExpandCollapseButtonsProps {
     hasDownstream?: boolean;
     canExpandUpstream?: boolean;
     canExpandDownstream?: boolean;
+    upstreamExpandPerformed?: boolean;
+    downstreamExpandPerformed?: boolean;
     onExpand?: (direction: LineageDirection) => void;
     onCollapse?: (direction: LineageDirection) => void;
 }
@@ -43,6 +45,8 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
     hasDownstream = false,
     canExpandUpstream = false,
     canExpandDownstream = false,
+    upstreamExpandPerformed = false,
+    downstreamExpandPerformed = false,
     onExpand,
     onCollapse,
 }) => {
@@ -78,7 +82,7 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
                     <PlusIcon />
                 </button>
             )}
-            {hasUpstream && (
+            {upstreamExpandPerformed && hasUpstream && (
                 <button
                     className="lineage-collapse-button upstream"
                     onClick={handleCollapseUpstream}
@@ -98,7 +102,7 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
                     <PlusIcon />
                 </button>
             )}
-            {hasDownstream && (
+            {downstreamExpandPerformed && hasDownstream && (
                 <button
                     className="lineage-collapse-button downstream"
                     onClick={handleCollapseDownstream}

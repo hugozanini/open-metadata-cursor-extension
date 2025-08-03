@@ -39,6 +39,35 @@ const LineageModal: React.FC<LineageModalProps> = ({
         centerNode: EntityReference;
     } | null>(null);
 
+    // Handle merging expanded lineage data with existing data
+    const handleExpandedLineageData = useCallback((expandedData: any, nodeId: string, direction: string) => {
+        if (!lineageData || !expandedData.nodes.length) {
+            console.log('No additional lineage data found for node:', nodeId);
+            return;
+        }
+
+        // Merge nodes (avoid duplicates)
+        const existingNodeIds = new Set(lineageData.nodes.map(n => n.id));
+        const newNodes = expandedData.nodes.filter((node: any) => !existingNodeIds.has(node.id));
+        
+        // Merge edges (avoid duplicates)
+        const existingEdgeKeys = new Set(lineageData.edges.map((e: any) => 
+            `${e.fromEntity.id}-${e.toEntity.id}`
+        ));
+        const newEdges = expandedData.edges.filter((edge: any) => 
+            !existingEdgeKeys.has(`${edge.fromEntity.id}-${edge.toEntity.id}`)
+        );
+
+        // Update lineage data with merged data
+        setLineageData({
+            ...lineageData,
+            nodes: [...lineageData.nodes, ...newNodes],
+            edges: [...lineageData.edges, ...newEdges]
+        });
+
+        console.log(`Merged ${newNodes.length} new nodes and ${newEdges.length} new edges`);
+    }, [lineageData]);
+
     // Fetch lineage data when modal opens
     const fetchLineageData = useCallback(() => {
         if (!tableFqn || !isOpen || !vscode) return;
@@ -77,12 +106,22 @@ const LineageModal: React.FC<LineageModalProps> = ({
                     setError(message.error);
                     setLineageData(null);
                     break;
+                    
+                case 'expandedLineageData':
+                    console.log('Received expanded lineage data:', message.expandedData);
+                    handleExpandedLineageData(message.expandedData, message.nodeId, message.direction);
+                    break;
+                    
+                case 'collapsedLineage':
+                    console.log('Lineage collapsed for node:', message.nodeId);
+                    // The LineageViewer handles collapse state internally
+                    break;
             }
         };
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [tableFqn]);
+    }, [tableFqn, handleExpandedLineageData]);
 
     // Load data when modal opens
     useEffect(() => {
@@ -131,6 +170,38 @@ const LineageModal: React.FC<LineageModalProps> = ({
         // Future: Could open that node's lineage or navigate to its details
         // For now, just log it
     }, []);
+
+    // Handle expanding a node to get more lineage data
+    const handleExpandNode = useCallback((nodeId: string, direction: string) => {
+        if (!vscode) return;
+        
+        console.log('Expanding node:', nodeId, 'in direction:', direction);
+        
+        // Request additional lineage data from the extension backend
+        vscode.postMessage({
+            type: 'expandLineage',
+            tableFqn: tableFqn,
+            nodeId: nodeId,
+            direction: direction,
+            entityType: 'table'
+        });
+    }, [tableFqn, vscode]);
+
+    // Handle collapsing a node
+    const handleCollapseNode = useCallback((nodeId: string, direction: string) => {
+        if (!vscode) return;
+        
+        console.log('Collapsing node:', nodeId, 'in direction:', direction);
+        
+        // For now, we'll handle collapse locally in the viewer
+        // In the future, we might want to update the backend state too
+        vscode.postMessage({
+            type: 'collapseLineage',
+            tableFqn: tableFqn,
+            nodeId: nodeId,
+            direction: direction
+        });
+    }, [tableFqn, vscode]);
 
     if (!isOpen) return null;
 
@@ -181,6 +252,8 @@ const LineageModal: React.FC<LineageModalProps> = ({
                             edges={lineageData.edges}
                             centerNodeFqn={tableFqn}
                             onNodeClick={handleNodeClick}
+                            onExpandNode={handleExpandNode}
+                            onCollapseNode={handleCollapseNode}
                         />
                     )}
 
