@@ -8,6 +8,7 @@ An AI-powered VS Code extension that brings intelligent data discovery to your O
 🤖 **AI Analysis** - Gemini-powered insights about your tables and data quality
 📊 **Rich Visualization** - Detailed table information with column details
 ⚡ **Fast Discovery** - Instantly find related tables and understand relationships
+🔗 **Data Lineage** - Interactive lineage visualization with expand/collapse functionality
 🎯 **Panel Integration** - Sits right next to your terminal for easy access
 
 ## Prerequisites
@@ -115,6 +116,41 @@ npm install
 - `sales` - Locate sales and revenue data
 - `product` - Find product catalog tables
 
+### Data Lineage Visualization
+
+The extension now includes interactive data lineage visualization capabilities:
+
+#### **✅ Currently Implemented**
+- **Interactive Lineage Graph** - Visual representation of data relationships
+- **Expand/Collapse Functionality** - Click (+) buttons to explore deeper lineage levels
+- **Directional Expansion** - Left buttons expand upstream, right buttons expand downstream  
+- **Smart Collapse Behavior** - Collapsed connections completely remove related nodes from canvas
+- **Proper Direction Enforcement** - Right buttons only expand downstream, left buttons only expand upstream
+- **Logical Connection Rules** - Downstream nodes cannot disconnect from their upstream parents
+- **ReactFlow Integration** - Professional graph visualization with smooth interactions
+- **Automatic Layout** - Nodes are automatically positioned for optimal viewing
+- **Clean UI** - Minimalist design matching OpenMetadata's visual style
+
+#### **📋 Planned Features (TODO)**
+- **Column-Level Lineage** - Show relationships between specific columns
+- **Observability Layer** - Display data quality metrics, pipeline runs, and monitoring information
+- **Lineage Search** - Search for specific entities within the lineage graph
+- **Custom Filters** - Filter lineage by entity type, data source, or other criteria
+- **Export Functionality** - Export lineage diagrams as images or documents
+- **Performance Optimization** - Code splitting and caching for large lineage graphs
+
+#### **How to Use Lineage**
+1. Search for any table using the main search
+2. Click the **"View Lineage"** button on any table card
+3. Explore the interactive graph:
+   - **Click (+) on the left** to expand upstream dependencies
+   - **Click (+) on the right** to expand downstream dependencies
+   - **Click (-) buttons** to collapse and hide connected nodes
+   - **Use mouse wheel** to zoom in/out
+   - **Drag nodes** to reposition them
+
+> **Note**: Column and Observability layers are **not yet implemented**. This represents the current phase of development focusing on core table-level lineage functionality. Future iterations will add these advanced features.
+
 ## Development
 
 ### Project Structure
@@ -125,11 +161,25 @@ open-metadata-cursor-extension/
 │   ├── OpenMetadataExplorerProvider.ts  # Webview provider
 │   ├── services/
 │   │   ├── OpenMetadataService.ts   # OpenMetadata API client
-│   │   └── GeminiService.ts         # Gemini AI integration
+│   │   ├── GeminiService.ts         # Gemini AI integration
+│   │   └── LineageService.ts        # Lineage data fetching and processing
 │   └── webview/
 │       ├── App.tsx                  # Main React app
-│       ├── components/              # React components
+│       ├── components/
+│       │   ├── Lineage/             # Lineage visualization components
+│       │   │   ├── LineageViewer.tsx    # Main lineage graph component
+│       │   │   ├── LineageModal.tsx     # Lineage modal wrapper
+│       │   │   ├── LineageNode.tsx      # Individual node component
+│       │   │   ├── ExpandCollapseButtons.tsx  # Node interaction buttons
+│       │   │   ├── CustomEdge.tsx       # Custom edge styling
+│       │   │   ├── LayersPanel.tsx      # Future: layers control panel
+│       │   │   └── LineageUtils.ts      # Lineage utility functions
+│       │   ├── SearchInterface.tsx  # Search input and controls
+│       │   ├── ResultsList.tsx      # Search results display
+│       │   ├── TableCard.tsx        # Individual table card
+│       │   └── ...                  # Other components
 │       └── styles.css               # Styling
+├── memory-bank/                     # Development documentation
 ├── package.json
 └── webpack.config.js
 ```
@@ -231,6 +281,35 @@ The extension can be configured through VS Code settings:
 - **Search functionality**: Returns tables with details and metadata
 - **AI features**: Shows insights and analysis for each table
 - **Responsive UI**: Fast search and smooth interactions
+
+## Development Status & Roadmap
+
+### ✅ **Completed Features (v1.0)**
+- **Core Search & Discovery** - Full-text search across OpenMetadata catalog
+- **AI Integration** - Gemini-powered insights and natural language search
+- **Authentication System** - JWT bot token authentication with OpenMetadata
+- **Rich UI Components** - Professional React-based interface
+- **Data Lineage Foundation** - Complete table-level lineage visualization with:
+  - Interactive expand/collapse functionality
+  - Directional expansion controls (upstream/downstream)
+  - Smart node management and layout
+  - ReactFlow integration with custom styling
+
+### 🚧 **Next Phase Development (v2.0)**
+- **Column-Level Lineage** - Detailed column-to-column relationships
+- **Observability Integration** - Data quality metrics, pipeline monitoring
+- **Performance Optimization** - Code splitting, caching, large graph handling
+- **Advanced Lineage Features** - Search, filters, export capabilities
+
+### 📚 **Documentation**
+The `memory-bank/` folder contains comprehensive development documentation including:
+- API integration patterns and examples
+- Feature implementation details and architecture decisions  
+- Troubleshooting guides and common issues
+- Technical context and system patterns
+- Progress tracking and development history
+
+This documentation serves as a knowledge base for future development and maintenance.
 
 ## Contributing
 
