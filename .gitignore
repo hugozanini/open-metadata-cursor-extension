@@ -53,3 +53,5 @@ coverage/
 
 # Webpack bundle analyzer
 bundle-analyzer-report.html
+
+OpenMetadata/

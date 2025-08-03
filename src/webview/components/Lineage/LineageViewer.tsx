@@ -22,12 +22,17 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { EdgeDetails, EntityReference } from '../../../services/LineageService';
+import CustomEdge from './CustomEdge';
 import LineageNode from './LineageNode';
 import { layoutNodes } from './LineageUtils';
 
-// Custom node types for ReactFlow
+// Custom node and edge types for ReactFlow
 const nodeTypes = {
     lineageNode: LineageNode,
+};
+
+const edgeTypes = {
+    customEdge: CustomEdge,
 };
 
 export interface LineageViewerProps {
@@ -114,22 +119,19 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                 id: `edge-${index}`,
                 source: sourceNodeId,
                 target: targetNodeId,
-                type: 'smoothstep',
+                type: 'customEdge', // Use our custom curved edge
                 animated: false,
                 markerEnd: {
                     type: MarkerType.ArrowClosed,
-                    width: 20,
-                    height: 20,
+                    width: 15,
+                    height: 15,
+                    color: 'var(--vscode-panel-border)',
                 },
                 style: {
-                    stroke: 'var(--vscode-terminal-ansiBlue)',
-                    strokeWidth: 2,
+                    stroke: 'var(--vscode-panel-border)',
+                    strokeWidth: 1.5,
                 },
-                label: edge.pipeline?.name || edge.source || '',
-                labelStyle: {
-                    fontSize: 12,
-                    fill: 'var(--vscode-foreground)',
-                },
+                // No label - clean edges like OpenMetadata
             };
         }).filter(Boolean) as Edge[];
 
@@ -150,10 +152,18 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
     const onInit = useCallback(
         (instance: ReactFlowInstance) => {
             setReactFlowInstance(instance);
-            // Fit view after a short delay to ensure nodes are rendered
+            // OpenMetadata-style fitView - simple and effective
             setTimeout(() => {
-                instance.fitView({ padding: 50 });
-            }, 100);
+                instance.fitView({ 
+                    padding: 50, // Smaller padding like OpenMetadata
+                    minZoom: 0.1, // OpenMetadata's MIN_ZOOM_VALUE
+                    maxZoom: 2.5, // OpenMetadata's MAX_ZOOM_VALUE
+                });
+                // Then zoom to a comfortable viewing level
+                setTimeout(() => {
+                    instance.zoomTo(0.65); // OpenMetadata's ZOOM_VALUE
+                }, 100);
+            }, 200);
         },
         []
     );
@@ -214,26 +224,20 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
                     onInit={onInit}
                     onNodeClick={handleNodeClick}
                     nodeTypes={nodeTypes}
+                    edgeTypes={edgeTypes}
                     connectionMode={ConnectionMode.Strict}
                     fitView
+                    fitViewOptions={{ 
+                        padding: 50, 
+                        minZoom: 0.1,
+                        maxZoom: 2.5,
+                    }}
                     attributionPosition="top-right"
                 >
                     <Controls />
                     <MiniMap 
-                        nodeStrokeColor={(n) => {
-                            const data = n.data as LineageNodeData;
-                            if (data?.isCenter) return 'var(--vscode-terminal-ansiRed)';
-                            if (data?.isUpstream) return 'var(--vscode-terminal-ansiGreen)';
-                            if (data?.isDownstream) return 'var(--vscode-terminal-ansiYellow)';
-                            return 'var(--vscode-terminal-ansiBlue)';
-                        }}
-                        nodeColor={(n) => {
-                            const data = n.data as LineageNodeData;
-                            if (data?.isCenter) return 'var(--vscode-terminal-ansiRed)';
-                            if (data?.isUpstream) return 'var(--vscode-terminal-ansiGreen)';
-                            if (data?.isDownstream) return 'var(--vscode-terminal-ansiYellow)';
-                            return 'var(--vscode-terminal-ansiBlue)';
-                        }}
+                        nodeStrokeColor="var(--vscode-panel-border)"
+                        nodeColor="var(--vscode-editor-background)"
                         maskColor="rgba(0, 0, 0, 0.1)"
                     />
                     <Background gap={12} size={1} />

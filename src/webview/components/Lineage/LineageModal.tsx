@@ -194,20 +194,6 @@ const LineageModal: React.FC<LineageModalProps> = ({
                 </div>
 
                 <div className="lineage-modal-footer">
-                    <div className="lineage-legend">
-                        <div className="legend-item">
-                            <span className="legend-color center"></span>
-                            <span>Current Table</span>
-                        </div>
-                        <div className="legend-item">
-                            <span className="legend-color upstream"></span>
-                            <span>Upstream Sources</span>
-                        </div>
-                        <div className="legend-item">
-                            <span className="legend-color downstream"></span>
-                            <span>Downstream Targets</span>
-                        </div>
-                    </div>
                     <div className="lineage-actions">
                         <button className="secondary-button" onClick={onClose}>
                             Close

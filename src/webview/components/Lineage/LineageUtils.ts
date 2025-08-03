@@ -12,19 +12,19 @@ import { LineageNodeData } from './LineageViewer';
 // Initialize ELK layout engine
 const elk = new ELK();
 
-// Layout configuration
+// Layout configuration - matching OpenMetadata's exact ELK settings
+// Reference: https://eclipse.dev/elk/reference/algorithms/org-eclipse-elk-mrtree.html
 const ELK_OPTIONS = {
-    'elk.algorithm': 'layered',
-    'elk.layered.spacing.nodeNodeBetweenLayers': '100',
-    'elk.spacing.nodeNode': '80',
+    'elk.algorithm': 'mrtree', // Multi-Root Tree algorithm like OpenMetadata
     'elk.direction': 'RIGHT',
-    'elk.layered.nodePlacement.strategy': 'INTERACTIVE',
-    'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
+    'elk.layered.spacing.edgeNodeBetweenLayers': '50',
+    'elk.spacing.nodeNode': '100',
+    'elk.layered.nodePlacement.strategy': 'SIMPLE',
 };
 
-// Node dimensions
+// Node dimensions - matching our slimmer design
 export const NODE_WIDTH = 200;
-export const NODE_HEIGHT = 120;
+export const NODE_HEIGHT = 60; // Updated to match CSS
 
 /**
  * Apply automatic layout to nodes and edges using ELK
@@ -44,8 +44,8 @@ export async function layoutNodes(
                 id: node.id,
                 width: NODE_WIDTH,
                 height: NODE_HEIGHT,
-                // Add extra height for center nodes to make them stand out
-                ...(node.data?.isCenter && { height: NODE_HEIGHT + 20 }),
+                // Add minimal extra height for center nodes to maintain slim design
+                ...(node.data?.isCenter && { height: NODE_HEIGHT + 10 }),
             })),
             edges: edges.map(edge => ({
                 id: edge.id,
@@ -92,6 +92,10 @@ function layoutNodesFallback(nodes: Node<LineageNodeData>[]): Node<LineageNodeDa
     
     const layoutedNodes = [...nodes];
     
+    // Simplified fallback positioning - let mrtree algorithm handle most of the work
+    const allNodes = nodes.length;
+    const spacing = NODE_HEIGHT + 100;
+    
     // Position center node
     if (centerNode) {
         const centerIndex = layoutedNodes.findIndex(n => n.id === centerNode.id);
@@ -103,7 +107,7 @@ function layoutNodesFallback(nodes: Node<LineageNodeData>[]): Node<LineageNodeDa
         }
     }
     
-    // Position upstream nodes (to the left)
+    // Position upstream nodes (left side)
     upstreamNodes.forEach((node, index) => {
         const nodeIndex = layoutedNodes.findIndex(n => n.id === node.id);
         if (nodeIndex !== -1) {
@@ -111,13 +115,13 @@ function layoutNodesFallback(nodes: Node<LineageNodeData>[]): Node<LineageNodeDa
                 ...node,
                 position: {
                     x: 50,
-                    y: 50 + index * (NODE_HEIGHT + 50),
+                    y: 50 + index * spacing,
                 },
             };
         }
     });
     
-    // Position downstream nodes (to the right)
+    // Position downstream nodes (right side)
     downstreamNodes.forEach((node, index) => {
         const nodeIndex = layoutedNodes.findIndex(n => n.id === node.id);
         if (nodeIndex !== -1) {
@@ -125,7 +129,7 @@ function layoutNodesFallback(nodes: Node<LineageNodeData>[]): Node<LineageNodeDa
                 ...node,
                 position: {
                     x: 750,
-                    y: 50 + index * (NODE_HEIGHT + 50),
+                    y: 50 + index * spacing,
                 },
             };
         }

@@ -3,61 +3,32 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Minimalist design inspired by OpenMetadata's clean lineage nodes
+ * https://github.com/open-metadata/OpenMetadata/blob/main/openmetadata-ui/src/main/resources/ui/src/components/Entity/EntityLineage/
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Handle, NodeProps, Position } from 'reactflow';
 import { LineageNodeData } from './LineageViewer';
 
 const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
     if (!data || !data.entity) return null;
 
-    const { entity, isCenter, isUpstream, isDownstream } = data;
+    const { entity, isCenter } = data;
 
-    // Determine node styling based on type and position
-    const getNodeClass = () => {
-        let baseClass = 'lineage-node';
+    // Get breadcrumb path - simplified version
+    const getBreadcrumbPath = useMemo(() => {
+        if (!entity.fullyQualifiedName) return '';
         
-        if (isCenter) {
-            baseClass += ' center-node';
-        } else if (isUpstream) {
-            baseClass += ' upstream-node';
-        } else if (isDownstream) {
-            baseClass += ' downstream-node';
-        }
-
-        if (entity.deleted) {
-            baseClass += ' deleted-node';
-        }
-
-        return baseClass;
-    };
-
-    // Get entity type icon
-    const getEntityIcon = (entityType: string | undefined) => {
-        if (!entityType) return '📄';
+        const parts = entity.fullyQualifiedName.split('.');
+        if (parts.length <= 1) return '';
         
-        switch (entityType.toLowerCase()) {
-            case 'table':
-                return '🗂️';
-            case 'pipeline':
-                return '⚙️';
-            case 'dashboard':
-                return '📊';
-            case 'topic':
-                return '📨';
-            case 'mlmodel':
-                return '🤖';
-            case 'container':
-                return '📦';
-            case 'searchindex':
-                return '🔍';
-            default:
-                return '📄';
-        }
-    };
+        // Show service.database.schema format
+        return parts.slice(0, -1).join(' / ');
+    }, [entity.fullyQualifiedName]);
 
-    // Format entity name for display
+    // Get display name (table name)
     const getDisplayName = () => {
         if (entity.displayName) return entity.displayName;
         if (entity.name) return entity.name;
@@ -68,74 +39,50 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
         return 'Unknown';
     };
 
-    // Get service name from FQN
-    const getServiceName = () => {
-        if (!entity.fullyQualifiedName) return '';
-        
-        const parts = entity.fullyQualifiedName.split('.');
-        return parts.length > 1 ? parts[0] : '';
+    // OpenMetadata-style entity icon - sized to match their design
+    const getEntityIcon = () => {
+        return (
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 3h18a1 1 0 011 1v16a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1zm1 2v2h16V5H4zm0 4v2h16V9H4zm0 4v2h16v-2H4zm0 4v2h16v-2H4z"/>
+            </svg>
+        );
     };
 
     return (
-        <div className={getNodeClass()}>
-            {/* Input handle for upstream connections */}
+        <div className={`lineage-node-minimal ${isCenter ? 'center-node' : ''}`}>
+            {/* Handles for connections */}
             <Handle
                 type="target"
                 position={Position.Left}
-                style={{
-                    background: 'var(--vscode-terminal-ansiBlue)',
-                    width: 10,
-                    height: 10,
-                }}
+                className="node-handle"
             />
-
-            {/* Node content */}
-            <div className="node-header">
-                <span className="entity-icon">
-                    {getEntityIcon(entity.type)}
-                </span>
-                <span className="entity-type">
-                    {entity.type ? entity.type.toUpperCase() : 'UNKNOWN'}
-                </span>
-            </div>
-
-            <div className="node-body">
-                <div className="entity-name" title={entity.fullyQualifiedName || entity.name || 'Unknown entity'}>
-                    {getDisplayName()}
-                </div>
-                
-                {getServiceName() && (
-                    <div className="service-name">
-                        {getServiceName()}
-                    </div>
-                )}
-
-                {entity.description && (
-                    <div className="entity-description" title={entity.description}>
-                        {entity.description.length > 60 
-                            ? `${entity.description.substring(0, 60)}...` 
-                            : entity.description
-                        }
-                    </div>
-                )}
-            </div>
-
-            {isCenter && (
-                <div className="center-indicator">
-                    <span>📍</span>
-                </div>
-            )}
-
-            {/* Output handle for downstream connections */}
             <Handle
                 type="source"
                 position={Position.Right}
-                style={{
-                    background: 'var(--vscode-terminal-ansiBlue)',
-                    width: 10,
-                    height: 10,
-                }}
+                className="node-handle"
             />
+
+            {/* Minimalist node content */}
+            <div className="node-content">
+                {/* Breadcrumb path */}
+                {getBreadcrumbPath && (
+                    <div className="node-breadcrumb" title={entity.fullyQualifiedName}>
+                        {getBreadcrumbPath}
+                    </div>
+                )}
+                
+                {/* Table info */}
+                <div className="node-main">
+                    <div className="node-icon">
+                        {getEntityIcon()}
+                    </div>
+                    <div className="node-name" title={entity.fullyQualifiedName}>
+                        {getDisplayName()}
+                    </div>
+                </div>
+            </div>
+
+            {/* Future: Expand/collapse controls will go here */}
         </div>
     );
 };
