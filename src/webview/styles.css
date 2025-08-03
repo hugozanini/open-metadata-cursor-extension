@@ -896,6 +896,30 @@
     transform: translateY(-50%) scale(1.1);
 }
 
+/* Placeholder for empty button circles (non-interactive) */
+.lineage-button-placeholder {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 50%;
+    background: var(--vscode-editor-background);
+    z-index: 10;
+    /* No cursor pointer - not interactive */
+}
+
+.lineage-button-placeholder.upstream {
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lineage-button-placeholder.downstream {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
 /* Collapsible Layers Panel - OpenMetadata Popover Style */
 .layers-panel {
     position: absolute;

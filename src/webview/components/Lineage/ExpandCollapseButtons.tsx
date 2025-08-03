@@ -22,6 +22,9 @@ interface ExpandCollapseButtonsProps {
     downstreamHidden?: boolean;
     canExpandUpstream?: boolean;
     canExpandDownstream?: boolean;
+    isCenter?: boolean;
+    isUpstream?: boolean;
+    isDownstream?: boolean;
     onExpand?: (direction: LineageDirection) => void;
     onCollapse?: (direction: LineageDirection) => void;
 }
@@ -47,6 +50,9 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
     downstreamHidden = false,
     canExpandUpstream = false,
     canExpandDownstream = false,
+    isCenter = false,
+    isUpstream = false,
+    isDownstream = false,
     onExpand,
     onCollapse,
 }) => {
@@ -84,13 +90,20 @@ const ExpandCollapseButtons: React.FC<ExpandCollapseButtonsProps> = ({
                             <PlusIcon />
                         </button>
                     ) : (
-                        <button
-                            className="lineage-collapse-button upstream"
-                            onClick={handleCollapseUpstream}
-                            title="Hide upstream datasets"
-                        >
-                            <MinusIcon />
-                        </button>
+                        // Only center nodes can collapse upstream connections
+                        // Downstream nodes should not disconnect from their parents
+                        isCenter ? (
+                            <button
+                                className="lineage-collapse-button upstream"
+                                onClick={handleCollapseUpstream}
+                                title="Hide upstream datasets"
+                            >
+                                <MinusIcon />
+                            </button>
+                        ) : (
+                            // Empty circle for downstream nodes - they can't collapse upstream
+                            <div className="lineage-button-placeholder upstream" />
+                        )
                     )
                 ) : (
                     <button
