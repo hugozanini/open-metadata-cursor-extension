@@ -29,17 +29,17 @@ interface ExpandCollapseButtonsProps {
     onCollapse?: (direction: LineageDirection) => void;
 }
 
-// Plus icon for expand (SVG matching OpenMetadata style)
+// Plus icon for expand (Bold and visible)
 const PlusIcon: React.FC = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2z" stroke="currentColor" strokeWidth="0.5"/>
     </svg>
 );
 
-// Minus icon for collapse (SVG matching OpenMetadata style)  
+// Minus icon for collapse (Bold and visible)  
 const MinusIcon: React.FC = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 13H5v-2h14v2z"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 11H5v2h14v-2z" stroke="currentColor" strokeWidth="0.5"/>
     </svg>
 );
 

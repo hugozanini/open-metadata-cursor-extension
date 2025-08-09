@@ -119,14 +119,14 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ onLayerToggle }) => {
                         isActive={activeLayers.has('column')}
                         onClick={() => handleLayerToggle('column')}
                         icon={<ColumnIcon />}
-                        label="Column"
+                        label="Column (TBD)"
                     />
                     
                     <LayerButton
                         isActive={activeLayers.has('observability')}
                         onClick={() => handleLayerToggle('observability')}
                         icon={<DataQualityIcon />}
-                        label="Observability"
+                        label="Observability (TBD)"
                     />
                 </div>
             )}

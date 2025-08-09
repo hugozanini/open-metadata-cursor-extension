@@ -69,17 +69,11 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ insights, isStreaming = 
     };
 
     return (
-        <div className="ai-overview">
-            <div className="ai-overview-content">
+        <div className="ai-overview-minimal">
+            <div className="ai-content-minimal">
                 {formatInsights(displayedText)}
                 {isTyping && <span className="cursor-blink">|</span>}
             </div>
-            {isTyping && (
-                <div className="typing-status">
-                    <span className="typing-indicator">●</span>
-                    <span className="typing-text">AI is analyzing...</span>
-                </div>
-            )}
         </div>
     );
 };

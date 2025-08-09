@@ -51,16 +51,18 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
 
     return (
         <div className={`lineage-node-minimal ${isCenter ? 'center-node' : ''}`}>
-            {/* Handles for connections */}
+            {/* Connection Handles - styled as visible connection dots */}
             <Handle
                 type="target"
                 position={Position.Left}
-                className="node-handle"
+                className="connection-handle connection-handle-left"
+                isConnectable={true}
             />
             <Handle
                 type="source"
                 position={Position.Right}
-                className="node-handle"
+                className="connection-handle connection-handle-right"
+                isConnectable={true}
             />
 
             {/* Minimalist node content */}
@@ -96,20 +98,6 @@ const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
                 isDownstream={data.isDownstream || false}
                 onExpand={(direction) => onExpand?.(entity, direction)}
                 onCollapse={(direction) => onCollapse?.(entity, direction)}
-            />
-
-            {/* React Flow Handles */}
-            <Handle
-                type="target"
-                position={Position.Left}
-                className="node-handle"
-                isConnectable={false}
-            />
-            <Handle
-                type="source"
-                position={Position.Right}
-                className="node-handle"
-                isConnectable={false}
             />
         </div>
     );

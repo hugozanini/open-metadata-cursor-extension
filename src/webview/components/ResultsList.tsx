@@ -73,16 +73,22 @@ export const ResultsList: React.FC<ResultsListProps> = ({
     if (searchQuery && results.length === 0) {
         return (
             <div className="results-section">
-                <div className="no-results-state">
-                    <h3>😕 No results found</h3>
-                    <p>No tables found matching "{searchQuery}"</p>
-                    <div className="suggestions">
-                        <p>Try:</p>
-                        <ul>
-                            <li>Using different keywords</li>
-                            <li>Checking your OpenMetadata connection</li>
-                            <li>Searching for common terms like "user", "order", "customer"</li>
-                        </ul>
+                <div className="no-results-state-compact">
+                    <div className="no-results-header">
+                        <span className="no-results-icon">🔍</span>
+                        <span>No results for "{searchQuery}"</span>
+                    </div>
+                    <div className="quick-actions">
+                        <span className="try-label">Try:</span>
+                        <button className="suggestion-chip" onClick={() => window.dispatchEvent(new CustomEvent('searchSuggestion', { detail: 'customer' }))}>
+                            customer
+                        </button>
+                        <button className="suggestion-chip" onClick={() => window.dispatchEvent(new CustomEvent('searchSuggestion', { detail: 'order' }))}>
+                            order
+                        </button>
+                        <button className="suggestion-chip" onClick={() => window.dispatchEvent(new CustomEvent('searchSuggestion', { detail: 'user' }))}>
+                            user
+                        </button>
                     </div>
                 </div>
             </div>
@@ -92,7 +98,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
     return (
         <div className="results-section">
             <div className="results-header">
-                <h3>📊 Found {results.length} table{results.length !== 1 ? 's' : ''}</h3>
+                <h3>Found {results.length} table{results.length !== 1 ? 's' : ''}</h3>
                 {searchQuery && (
                     <p>Results for: <strong>"{searchQuery}"</strong></p>
                 )}

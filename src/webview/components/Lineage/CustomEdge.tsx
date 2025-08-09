@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { EdgeProps, getBezierPath } from 'reactflow';
+import { EdgeProps, getBezierPath, Position } from 'reactflow';
 
 const CustomEdge: React.FC<EdgeProps> = ({
     id,
@@ -22,21 +22,29 @@ const CustomEdge: React.FC<EdgeProps> = ({
     style = {},
     markerEnd,
 }) => {
-    // Create curved path using getBezierPath (like OpenMetadata)
+    // Adjust connection points to account for the visual connection dots
+    // Connection dots are positioned at -10px (left) and +10px (right) from node center
+    const connectionDotOffset = 10;
+    
+    // Adjust source and target positions based on connection dot positions
+    const adjustedSourceX = sourcePosition === Position.Right ? sourceX + connectionDotOffset : sourceX - connectionDotOffset;
+    const adjustedTargetX = targetPosition === Position.Left ? targetX - connectionDotOffset : targetX + connectionDotOffset;
+    
+    // Create curved path using adjusted positions
     const [edgePath] = getBezierPath({
-        sourceX,
+        sourceX: adjustedSourceX,
         sourceY,
         sourcePosition,
-        targetX,
+        targetX: adjustedTargetX,
         targetY,
         targetPosition,
     });
 
-    // OpenMetadata-style edge styling
+    // Improved edge styling for better visibility in both light and dark modes
     const edgeStyle = {
-        stroke: 'var(--vscode-panel-border)',
-        strokeWidth: 1.5,
-        opacity: 1,
+        stroke: 'var(--vscode-descriptionForeground)',
+        strokeWidth: 2.5,
+        opacity: 0.8,
         ...style,
     };
 

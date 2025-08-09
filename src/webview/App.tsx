@@ -69,6 +69,15 @@ export const App: React.FC = () => {
         // Request configuration when component mounts
         vscode.postMessage({ type: 'getConfig' });
 
+        // Handle search suggestion events from ResultsList
+        const handleSearchSuggestion = (event: CustomEvent) => {
+            const query = event.detail;
+            setSearchQuery(query);
+            vscode.postMessage({ type: 'search', query });
+        };
+
+        window.addEventListener('searchSuggestion', handleSearchSuggestion as EventListener);
+
         // Handle messages from the extension
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
@@ -108,7 +117,10 @@ export const App: React.FC = () => {
         };
 
         window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
+        return () => {
+            window.removeEventListener('message', handleMessage);
+            window.removeEventListener('searchSuggestion', handleSearchSuggestion as EventListener);
+        };
     }, [vscode]);
 
     const handleSearch = () => {

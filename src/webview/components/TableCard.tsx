@@ -23,6 +23,7 @@ interface TableCardProps {
 export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) => {
     const [showDetails, setShowDetails] = useState(false);
     const [showAI, setShowAI] = useState(false);
+    const [showAllColumns, setShowAllColumns] = useState(false);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Unknown';
@@ -40,138 +41,143 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
 
     const getTableTypeIcon = (type?: string) => {
         switch (type?.toLowerCase()) {
-            case 'table': return '📊';
-            case 'view': return '👁️';
-            case 'external': return '🔗';
-            default: return '📋';
+            case 'table': return '';
+            case 'view': return '';
+            case 'external': return '';
+            default: return '';
         }
     };
 
     return (
-        <div className="table-card">
-            <div className="table-card-header">
-                <div className="table-name-section">
-                    <h4 className="table-name">
-                        {getTableTypeIcon(table.tableType)} {table.name}
-                    </h4>
-                    <div className="table-path">
-                        {table.database && <span className="database">{table.database}</span>}
-                        {table.schema && <span className="schema">.{table.schema}</span>}
-                        <span className="table-type">({table.tableType || 'table'})</span>
+        <div className="table-card-compact">
+            <div className="table-card-main">
+                <div className="table-info">
+                    <div className="table-name-compact">
+                        <span className="table-icon">{getTableTypeIcon(table.tableType)}</span>
+                        <span className="table-name-text">{table.name}</span>
+                        <span className="table-path-compact">
+                            {table.database && <span className="database">{table.database}</span>}
+                            {table.schema && <span className="schema">.{table.schema}</span>}
+                        </span>
                     </div>
-                </div>
-                <div className="table-actions">
-                    <button
-                        className={`details-button ${showDetails ? 'active' : ''}`}
-                        onClick={() => setShowDetails(!showDetails)}
-                        title="Toggle details"
-                    >
-                        {showDetails ? '▼' : '▶'} Details
-                    </button>
-                    {table.aiAnalysis && (
-                        <button
-                            className={`ai-button ${showAI ? 'active' : ''}`}
-                            onClick={() => setShowAI(!showAI)}
-                            title="Toggle AI analysis"
-                        >
-                            🤖 AI
-                        </button>
+                    {table.description && (
+                        <div className="table-description-compact">{table.description}</div>
                     )}
+                </div>
+                
+                <div className="table-actions-compact">
                     {onViewLineage && (
                         <button
-                            className="lineage-button"
+                            className="action-button lineage"
                             onClick={() => onViewLineage(table.fullyQualifiedName, table.name)}
                             title="View data lineage"
                         >
-                            🔗 Lineage
+                            Lineage
                         </button>
                     )}
+                    <button
+                        className={`action-button details ${showDetails ? 'active' : ''}`}
+                        onClick={() => setShowDetails(!showDetails)}
+                        title="Toggle details"
+                    >
+                        ▼ Details
+                    </button>
                 </div>
             </div>
 
-            <div className="table-card-body">
-                {table.description && (
-                    <p className="table-description">{table.description}</p>
-                )}
-
-                <div className="table-stats">
-                    <div className="stat-item">
-                        <span className="stat-label">Rows:</span>
-                        <span className="stat-value">{formatNumber(table.rowCount)}</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-label">Columns:</span>
-                        <span className="stat-value">{table.columns?.length || 'Unknown'}</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-label">Updated:</span>
-                        <span className="stat-value">{formatDate(table.updatedAt)}</span>
-                    </div>
+            <div className="table-metadata-compact">
+                <div className="metadata-item">
+                    <span className="metadata-value">{formatNumber(table.rowCount)}</span>
+                    <span className="metadata-label">rows</span>
                 </div>
-
+                <div className="metadata-separator">•</div>
+                <div className="metadata-item">
+                    <span className="metadata-value">{table.columns?.length || '?'}</span>
+                    <span className="metadata-label">cols</span>
+                </div>
+                <div className="metadata-separator">•</div>
+                <div className="metadata-item">
+                    <span className="metadata-value">{formatDate(table.updatedAt)}</span>
+                </div>
                 {table.tags && table.tags.length > 0 && (
-                    <div className="table-tags">
-                        {table.tags.map((tag, index) => (
-                            <span key={index} className="tag">
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-                )}
-
-                {showDetails && (
-                    <div className="table-details">
-                        <h5>📋 Column Details</h5>
-                        {table.columns && table.columns.length > 0 ? (
-                            <div className="columns-list">
-                                {table.columns.slice(0, 10).map((column, index) => (
-                                    <div key={index} className="column-item">
-                                        <span className="column-name">{column.name}</span>
-                                        <span className="column-type">{column.dataType || 'unknown'}</span>
-                                        {column.description && (
-                                            <span className="column-description">
-                                                - {column.description}
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                                {table.columns.length > 10 && (
-                                    <div className="column-item more-columns">
-                                        ... and {table.columns.length - 10} more columns
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <p className="no-columns">No column information available</p>
-                        )}
-                    </div>
-                )}
-
-                {showAI && table.aiAnalysis && (
-                    <div className="ai-analysis">
-                        <h5>🤖 AI Analysis</h5>
-                        <div className="ai-content">
-                            {table.aiAnalysis.split('\n').map((line, index) => {
-                                if (line.match(/^[📊⚠️💡🔗]/)) {
-                                    return (
-                                        <div key={index} className="ai-line highlighted">
-                                            {line}
-                                        </div>
-                                    );
-                                }
-                                if (line.trim()) {
-                                    return (
-                                        <div key={index} className="ai-line">
-                                            {line}
-                                        </div>
-                                    );
-                                }
-                                return <br key={index} />;
-                            })}
+                    <>
+                        <div className="metadata-separator">•</div>
+                        <div className="table-tags-compact">
+                            {table.tags.slice(0, 2).map((tag, index) => (
+                                <span key={index} className="tag-compact">
+                                    {tag}
+                                </span>
+                            ))}
+                            {table.tags.length > 2 && (
+                                <span className="tag-compact more">+{table.tags.length - 2}</span>
+                            )}
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
+
+            {showDetails && (
+                <div className="table-details-compact">
+                    {table.columns && table.columns.length > 0 ? (
+                        <div className="columns-grid">
+                            {(showAllColumns ? table.columns : table.columns.slice(0, 8)).map((column, index) => (
+                                <div 
+                                    key={index} 
+                                    className="column-item-compact"
+                                    title={column.description || `${column.name} (${column.dataType || 'unknown'})`}
+                                >
+                                    <span className="column-name-compact">{column.name}</span>
+                                    <span className="column-type-compact">{column.dataType || 'unknown'}</span>
+                                </div>
+                            ))}
+                            {!showAllColumns && table.columns.length > 8 && (
+                                <div 
+                                    className="column-item-compact more-columns-compact clickable"
+                                    onClick={() => setShowAllColumns(true)}
+                                    title="Click to show all columns"
+                                >
+                                    +{table.columns.length - 8} more
+                                </div>
+                            )}
+                            {showAllColumns && table.columns.length > 8 && (
+                                <div 
+                                    className="column-item-compact less-columns-compact clickable"
+                                    onClick={() => setShowAllColumns(false)}
+                                    title="Click to show fewer columns"
+                                >
+                                    Show less
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="no-columns-compact">No column information available</div>
+                    )}
+                </div>
+            )}
+
+            {showAI && table.aiAnalysis && (
+                <div className="ai-analysis-compact">
+                    <div className="ai-content-compact">
+                        {table.aiAnalysis.split('\n').map((line, index) => {
+                            if (line.match(/^[📊⚠️💡🔗]/)) {
+                                return (
+                                    <div key={index} className="ai-line-compact highlighted">
+                                        {line}
+                                    </div>
+                                );
+                            }
+                            if (line.trim()) {
+                                return (
+                                    <div key={index} className="ai-line-compact">
+                                        {line}
+                                    </div>
+                                );
+                            }
+                            return <br key={index} />;
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

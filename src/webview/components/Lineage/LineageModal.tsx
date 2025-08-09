@@ -206,15 +206,12 @@ const LineageModal: React.FC<LineageModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="lineage-modal-backdrop" onClick={handleBackdropClick}>
-            <div className="lineage-modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="lineage-modal-header">
-                    <div className="lineage-modal-title">
-                        <span className="lineage-icon">🔗</span>
-                        <h2>Data Lineage: {tableName}</h2>
-                    </div>
+        <div className="lineage-modal-backdrop-compact" onClick={handleBackdropClick}>
+            <div className="lineage-modal-content-compact" onClick={(e) => e.stopPropagation()}>
+                <div className="lineage-modal-header-minimal">
+                    <span className="lineage-title-minimal">{tableName}</span>
                     <button 
-                        className="lineage-modal-close" 
+                        className="lineage-modal-close-minimal" 
                         onClick={onClose}
                         aria-label="Close lineage modal"
                     >
@@ -222,22 +219,22 @@ const LineageModal: React.FC<LineageModalProps> = ({
                     </button>
                 </div>
 
-                <div className="lineage-modal-body">
+                <div className="lineage-modal-body-compact">
                     {loading && (
-                        <div className="lineage-loading">
-                            <div className="loading-spinner"></div>
-                            <p>Loading lineage data...</p>
+                        <div className="lineage-loading-compact">
+                            <div className="loading-spinner-compact"></div>
+                            <span>Loading lineage data...</span>
                         </div>
                     )}
 
                     {error && (
-                        <div className="lineage-error">
-                            <div className="error-icon">⚠️</div>
-                            <div className="error-content">
-                                <h3>Failed to Load Lineage</h3>
-                                <p>{error}</p>
+                        <div className="lineage-error-compact">
+                            <span className="error-icon-compact">⚠️</span>
+                            <div className="error-content-compact">
+                                <div className="error-title">Failed to Load Lineage</div>
+                                <div className="error-message">{error}</div>
                                 <button 
-                                    className="retry-button" 
+                                    className="retry-button-compact" 
                                     onClick={fetchLineageData}
                                 >
                                     Try Again
@@ -258,20 +255,14 @@ const LineageModal: React.FC<LineageModalProps> = ({
                     )}
 
                     {!loading && !error && !lineageData && (
-                        <div className="lineage-empty">
-                            <div className="empty-icon">📄</div>
-                            <h3>No Lineage Data</h3>
-                            <p>This table doesn't have any upstream or downstream connections.</p>
+                        <div className="lineage-empty-compact">
+                            <span className="empty-icon-compact">📄</span>
+                            <div className="empty-content-compact">
+                                <div className="empty-title">No Lineage Data</div>
+                                <div className="empty-message">This table doesn't have any upstream or downstream connections.</div>
+                            </div>
                         </div>
                     )}
-                </div>
-
-                <div className="lineage-modal-footer">
-                    <div className="lineage-actions">
-                        <button className="secondary-button" onClick={onClose}>
-                            Close
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
