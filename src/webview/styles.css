@@ -926,11 +926,14 @@
 }
 
 .column-type-compact {
-    color: var(--vscode-descriptionForeground);
+    color: var(--vscode-editor-background);
     font-size: 11px;
-    background-color: var(--vscode-badge-background);
-    padding: 1px 4px;
-    border-radius: 3px;
+    background-color: var(--vscode-terminal-ansiCyan);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .more-columns-compact {
