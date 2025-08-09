@@ -917,6 +917,12 @@
     color: var(--vscode-terminal-ansiBlue);
     font-weight: 500;
     font-family: var(--vscode-editor-font-family, monospace);
+    word-break: break-word;
+    hyphens: auto;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+    flex: 1;
+    min-width: 0;
 }
 
 .column-type-compact {
@@ -928,6 +934,9 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 1px;
 }
 
 .more-columns-compact {
@@ -970,40 +979,14 @@
     transform: translateY(-1px);
 }
 
-/* Custom Column Tooltip */
-.column-tooltip {
-    background-color: var(--vscode-editorHoverWidget-background);
-    border: 1px solid var(--vscode-editorHoverWidget-border);
-    color: var(--vscode-editorHoverWidget-foreground);
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    max-width: 300px;
-    word-wrap: break-word;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    pointer-events: none;
-    animation: tooltipFadeIn 0.2s ease-out;
-}
-
-@keyframes tooltipFadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
 .column-item-compact {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     font-size: 12px;
-    padding: 2px 0;
-    cursor: help;
+    padding: 4px 0;
     transition: background-color 0.2s ease;
+    min-height: 24px;
 }
 
 .column-item-compact:hover {
