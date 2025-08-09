@@ -32,11 +32,11 @@ const CustomEdge: React.FC<EdgeProps> = ({
         targetPosition,
     });
 
-    // OpenMetadata-style edge styling
+    // Improved edge styling for better visibility in both light and dark modes
     const edgeStyle = {
-        stroke: 'var(--vscode-panel-border)',
-        strokeWidth: 1.5,
-        opacity: 1,
+        stroke: 'var(--vscode-descriptionForeground)',
+        strokeWidth: 2.5,
+        opacity: 0.8,
         ...style,
     };
 
