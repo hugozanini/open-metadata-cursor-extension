@@ -1272,6 +1272,39 @@
     background: var(--vscode-list-hoverBackground);
 }
 
+/* Minimal Header - Much thinner and cleaner */
+.lineage-modal-header-minimal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-editor-background);
+    min-height: 28px;
+}
+
+.lineage-title-minimal {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.lineage-modal-close-minimal {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.lineage-modal-close-minimal:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
 .lineage-modal-body-compact {
     flex: 1;
     overflow: hidden;

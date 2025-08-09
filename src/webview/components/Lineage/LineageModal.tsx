@@ -208,12 +208,10 @@ const LineageModal: React.FC<LineageModalProps> = ({
     return (
         <div className="lineage-modal-backdrop-compact" onClick={handleBackdropClick}>
             <div className="lineage-modal-content-compact" onClick={(e) => e.stopPropagation()}>
-                <div className="lineage-modal-header-compact">
-                    <div className="lineage-modal-title-compact">
-                        <span className="lineage-title-text">Data Lineage: {tableName}</span>
-                    </div>
+                <div className="lineage-modal-header-minimal">
+                    <span className="lineage-title-minimal">{tableName}</span>
                     <button 
-                        className="lineage-modal-close-compact" 
+                        className="lineage-modal-close-minimal" 
                         onClick={onClose}
                         aria-label="Close lineage modal"
                     >
