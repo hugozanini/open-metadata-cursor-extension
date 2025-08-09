@@ -1,13 +1,29 @@
 {
   "name": "openmetadata-ai-explorer",
-  "displayName": "OpenMetadata",
-  "description": "AI-powered data discovery for OpenMetadata",
-  "version": "0.0.1",
+  "displayName": "OpenMetadata AI Explorer",
+  "description": "AI-powered data discovery and lineage visualization for OpenMetadata",
+  "version": "1.1.0",
+  "publisher": "your-company-name",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@company.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hugozanini/open-metadata-cursor-extension.git"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "openmetadata",
+    "data-catalog",
+    "lineage",
+    "ai",
+    "data-discovery"
   ],
   "activationEvents": [
     "onView:openmetadataExplorer"
@@ -64,6 +80,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "webpack --mode production",
     "watch": "webpack --mode development --watch",
+    "package": "npm run compile && npx @vscode/vsce package",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
