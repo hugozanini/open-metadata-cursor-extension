@@ -3,9 +3,9 @@
   "displayName": "OpenMetadata AI Explorer",
   "description": "AI-powered data discovery and lineage visualization for OpenMetadata",
   "version": "1.1.0",
-  "publisher": "your-company-name",
+  "publisher": "openmetadata",
   "author": {
-    "name": "Your Name",
+    "name": "Hugo Zanini",
     "email": "your.email@company.com"
   },
   "repository": {

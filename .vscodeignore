@@ -1,0 +1,52 @@
+# Build outputs
+out/
+node_modules/
+.vscode-test/
+
+# Source maps
+*.map
+
+# Development files
+.vscode/
+.gitignore
+.eslintrc.json
+tsconfig.json
+webpack.config.js
+
+# Documentation (keep essential ones)
+*.md
+!README.md
+
+# Test files
+src/test/
+**/*.test.ts
+**/*.test.js
+
+# OpenMetadata folder (not needed in extension package)
+OpenMetadata/
+
+# Memory bank (development notes)
+memory-bank/
+
+# Article folder
+article/
+
+# Build scripts
+build-extension.sh
+DISTRIBUTION-GUIDE.md
+
+# Git files
+.git/
+.gitattributes
+
+# NPM files
+package-lock.json
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
