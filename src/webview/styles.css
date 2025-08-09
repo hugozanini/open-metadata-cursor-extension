@@ -1488,7 +1488,34 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-/* Clean handles */
+/* Connection Handles - Invisible but positioned exactly at expand/collapse buttons */
+.connection-handle {
+    background: transparent;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    z-index: 1; /* Behind expand/collapse buttons */
+    opacity: 0; /* Invisible */
+}
+
+.connection-handle:hover {
+    /* No hover effects since they're invisible */
+}
+
+.connection-handle-left {
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.connection-handle-right {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Legacy handle styles (kept for compatibility) */
 .node-handle {
     background: var(--vscode-panel-border);
     border: 1px solid var(--vscode-editor-background);
