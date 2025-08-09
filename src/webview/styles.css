@@ -911,13 +911,7 @@
     gap: 8px 16px;
 }
 
-.column-item-compact {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    padding: 2px 0;
-}
+
 
 .column-name-compact {
     color: var(--vscode-terminal-ansiBlue);
@@ -942,6 +936,55 @@
     grid-column: 1 / -1;
     text-align: center;
     padding: 4px;
+}
+
+.more-columns-compact.clickable {
+    color: var(--vscode-terminal-ansiBlue);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.more-columns-compact.clickable:hover {
+    color: var(--vscode-terminal-ansiBrightBlue);
+    background-color: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    transform: translateY(-1px);
+}
+
+.less-columns-compact {
+    color: var(--vscode-terminal-ansiBlue);
+    font-style: italic;
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.less-columns-compact:hover {
+    color: var(--vscode-terminal-ansiBrightBlue);
+    background-color: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    transform: translateY(-1px);
+}
+
+.column-item-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 2px 0;
+    cursor: help;
+    transition: background-color 0.2s ease;
+}
+
+.column-item-compact:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin: -2px -6px;
 }
 
 .no-columns-compact {

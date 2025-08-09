@@ -23,6 +23,7 @@ interface TableCardProps {
 export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) => {
     const [showDetails, setShowDetails] = useState(false);
     const [showAI, setShowAI] = useState(false);
+    const [showAllColumns, setShowAllColumns] = useState(false);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Unknown';
@@ -119,15 +120,32 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
                 <div className="table-details-compact">
                     {table.columns && table.columns.length > 0 ? (
                         <div className="columns-grid">
-                            {table.columns.slice(0, 8).map((column, index) => (
-                                <div key={index} className="column-item-compact">
+                            {(showAllColumns ? table.columns : table.columns.slice(0, 8)).map((column, index) => (
+                                <div 
+                                    key={index} 
+                                    className="column-item-compact"
+                                    title={column.description || `${column.name} (${column.dataType || 'unknown'})`}
+                                >
                                     <span className="column-name-compact">{column.name}</span>
                                     <span className="column-type-compact">{column.dataType || 'unknown'}</span>
                                 </div>
                             ))}
-                            {table.columns.length > 8 && (
-                                <div className="column-item-compact more-columns-compact">
+                            {!showAllColumns && table.columns.length > 8 && (
+                                <div 
+                                    className="column-item-compact more-columns-compact clickable"
+                                    onClick={() => setShowAllColumns(true)}
+                                    title="Click to show all columns"
+                                >
                                     +{table.columns.length - 8} more
+                                </div>
+                            )}
+                            {showAllColumns && table.columns.length > 8 && (
+                                <div 
+                                    className="column-item-compact less-columns-compact clickable"
+                                    onClick={() => setShowAllColumns(false)}
+                                    title="Click to show fewer columns"
+                                >
+                                    Show less
                                 </div>
                             )}
                         </div>
