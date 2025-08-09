@@ -24,6 +24,7 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
     const [showDetails, setShowDetails] = useState(false);
     const [showAI, setShowAI] = useState(false);
     const [showAllColumns, setShowAllColumns] = useState(false);
+    const [hoveredColumn, setHoveredColumn] = useState<{ index: number; description: string; position: { x: number; y: number } } | null>(null);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Unknown';
@@ -46,6 +47,20 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
             case 'external': return '🔗';
             default: return '📋';
         }
+    };
+
+    const handleColumnHover = (event: React.MouseEvent, column: any, index: number) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const description = column.description || `${column.name} - ${column.dataType || 'unknown'} type`;
+        setHoveredColumn({
+            index,
+            description,
+            position: { x: rect.left + rect.width / 2, y: rect.top - 10 }
+        });
+    };
+
+    const handleColumnLeave = () => {
+        setHoveredColumn(null);
     };
 
     return (
@@ -124,7 +139,8 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
                                 <div 
                                     key={index} 
                                     className="column-item-compact"
-                                    title={column.description || `${column.name} (${column.dataType || 'unknown'})`}
+                                    onMouseEnter={(e) => handleColumnHover(e, column, index)}
+                                    onMouseLeave={handleColumnLeave}
                                 >
                                     <span className="column-name-compact">{column.name}</span>
                                     <span className="column-type-compact">{column.dataType || 'unknown'}</span>
@@ -176,6 +192,22 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
                             return <br key={index} />;
                         })}
                     </div>
+                </div>
+            )}
+            
+            {/* Custom Tooltip */}
+            {hoveredColumn && (
+                <div 
+                    className="column-tooltip"
+                    style={{
+                        position: 'fixed',
+                        left: `${hoveredColumn.position.x}px`,
+                        top: `${hoveredColumn.position.y}px`,
+                        transform: 'translateX(-50%)',
+                        zIndex: 1000
+                    }}
+                >
+                    {hoveredColumn.description}
                 </div>
             )}
         </div>

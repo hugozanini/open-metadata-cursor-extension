@@ -970,6 +970,32 @@
     transform: translateY(-1px);
 }
 
+/* Custom Column Tooltip */
+.column-tooltip {
+    background-color: var(--vscode-editorHoverWidget-background);
+    border: 1px solid var(--vscode-editorHoverWidget-border);
+    color: var(--vscode-editorHoverWidget-foreground);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    max-width: 300px;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
 .column-item-compact {
     display: flex;
     align-items: center;
