@@ -374,7 +374,7 @@ const LineageViewer: React.FC<LineageViewerProps> = ({
         <div className="lineage-viewer">
             {onClose && (
                 <div className="lineage-header">
-                    <h3>🔗 Data Lineage</h3>
+                    <h3>Data Lineage</h3>
                     <button className="close-button" onClick={onClose}>
                         ×
                     </button>

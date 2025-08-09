@@ -210,7 +210,6 @@ const LineageModal: React.FC<LineageModalProps> = ({
             <div className="lineage-modal-content-compact" onClick={(e) => e.stopPropagation()}>
                 <div className="lineage-modal-header-compact">
                     <div className="lineage-modal-title-compact">
-                        <span className="lineage-icon-compact">🔗</span>
                         <span className="lineage-title-text">Data Lineage: {tableName}</span>
                     </div>
                     <button 

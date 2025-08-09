@@ -41,10 +41,10 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
 
     const getTableTypeIcon = (type?: string) => {
         switch (type?.toLowerCase()) {
-            case 'table': return '📊';
-            case 'view': return '👁️';
-            case 'external': return '🔗';
-            default: return '📋';
+            case 'table': return '';
+            case 'view': return '';
+            case 'external': return '';
+            default: return '';
         }
     };
 
@@ -72,7 +72,7 @@ export const TableCard: React.FC<TableCardProps> = ({ table, onViewLineage }) =>
                             onClick={() => onViewLineage(table.fullyQualifiedName, table.name)}
                             title="View data lineage"
                         >
-                            🔗 Lineage
+                            Lineage
                         </button>
                     )}
                     <button

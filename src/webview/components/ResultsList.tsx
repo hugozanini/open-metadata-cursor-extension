@@ -98,7 +98,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
     return (
         <div className="results-section">
             <div className="results-header">
-                <h3>📊 Found {results.length} table{results.length !== 1 ? 's' : ''}</h3>
+                <h3>Found {results.length} table{results.length !== 1 ? 's' : ''}</h3>
                 {searchQuery && (
                     <p>Results for: <strong>"{searchQuery}"</strong></p>
                 )}
