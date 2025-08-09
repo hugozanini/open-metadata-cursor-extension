@@ -1488,15 +1488,15 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-/* Connection Handles - Invisible but positioned exactly at expand/collapse buttons */
+/* Connection Handles - Small invisible handles at node center for React Flow */
 .connection-handle {
     background: transparent;
     border: none;
-    width: 20px;
-    height: 20px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    z-index: 1; /* Behind expand/collapse buttons */
-    opacity: 0; /* Invisible */
+    z-index: 1;
+    opacity: 0; /* Invisible since visual connection is handled by expand/collapse buttons */
 }
 
 .connection-handle:hover {
@@ -1504,15 +1504,11 @@
 }
 
 .connection-handle-left {
-    left: -10px;
-    top: 50%;
-    transform: translateY(-50%);
+    left: -4px;
 }
 
 .connection-handle-right {
-    right: -10px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: -4px;
 }
 
 /* Legacy handle styles (kept for compatibility) */
