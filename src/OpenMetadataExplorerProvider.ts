@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { GeminiService } from './services/GeminiService';
 import { LineageService } from './services/LineageService';
+import { ModeManagerService } from './services/ModeManagerService';
 import { OpenMetadataService } from './services/OpenMetadataService';
 
 export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider {
@@ -9,11 +10,32 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
     private openMetadataService: OpenMetadataService;
     private geminiService?: GeminiService;
     private lineageService!: LineageService;
+    private modeManagerService!: ModeManagerService;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {
-        this.openMetadataService = new OpenMetadataService();
-        this.initializeGeminiService();
-        this.initializeLineageService();
+    constructor(private readonly _extensionUri: vscode.Uri, private context: vscode.ExtensionContext) {
+        console.log('🔧 OpenMetadataExplorerProvider: Starting constructor...');
+        
+        try {
+            console.log('🗄️ Initializing OpenMetadata service...');
+            this.openMetadataService = new OpenMetadataService();
+            
+            console.log('🤖 Initializing Gemini service...');
+            this.initializeGeminiService();
+            
+            console.log('📊 Initializing Lineage service...');
+            this.initializeLineageService();
+            
+            console.log('🎤 Initializing ModeManager service...');
+            // Initialize ModeManagerService asynchronously
+            this.initializeModeManagerService().catch(error => {
+                console.error('❌ Failed to initialize ModeManagerService:', error);
+            });
+            
+            console.log('✅ OpenMetadataExplorerProvider constructor completed');
+        } catch (error) {
+            console.error('❌ Error in OpenMetadataExplorerProvider constructor:', error);
+            throw error;
+        }
     }
 
     private initializeGeminiService() {
@@ -31,6 +53,16 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
         const authToken = config.get<string>('openmetadataAuthToken') || '';
         
         this.lineageService = new LineageService(openmetadataUrl, authToken);
+    }
+
+    private async initializeModeManagerService() {
+        this.modeManagerService = new ModeManagerService(this.context);
+        await this.modeManagerService.initialize();
+        
+        // Set up message handler for webview communication
+        this.modeManagerService.setMessageHandler((message) => {
+            this._view?.webview.postMessage(message);
+        });
     }
 
     public resolveWebviewView(
@@ -61,6 +93,24 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     break;
                 case 'expandLineage':
                     await this.handleExpandLineage(data.tableFqn, data.nodeId, data.direction, data.entityType);
+                    break;
+                case 'openVibeCoder':
+                    await this.handleOpenVibeCoder();
+                    break;
+                // Forward all other messages to ModeManagerService
+                default:
+                    if (this.modeManagerService) {
+                        try {
+                            const response = await this.modeManagerService.handleMessage(data);
+                            if (response) {
+                                this._view?.webview.postMessage(response);
+                            }
+                        } catch (error) {
+                            console.error('Error handling message in ModeManagerService:', error);
+                        }
+                    } else {
+                        console.warn('ModeManagerService not initialized yet, ignoring message:', data.type);
+                    }
                     break;
                 case 'collapseLineage':
                     await this.handleCollapseLineage(data.tableFqn, data.nodeId, data.direction);
@@ -141,6 +191,15 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 error: error instanceof Error ? error.message : 'Unknown error occurred'
             });
         }
+    }
+
+    private async handleOpenVibeCoder() {
+        if (!this._view) return;
+
+        // Send message to webview to open the Vibe Coder modal
+        this._view.webview.postMessage({
+            type: 'openVibeCoderModal'
+        });
     }
 
     private async handleGetLineage(tableFqn: string, entityType: string = 'table') {
@@ -253,6 +312,9 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             vscode.Uri.joinPath(this._extensionUri, 'assets', 'extension-logo.svg')
         );
 
+        console.log('🔗 Webview script URI:', scriptUri.toString());
+        console.log('🖼️ Logo URI:', logoUri.toString());
+
         // Use a nonce to only allow specific scripts to be run
         const nonce = getNonce();
 
@@ -286,8 +348,9 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             </div>
             <div id="root"></div>
             <script nonce="${nonce}">
-                console.log('Webview script starting...');
-                console.log('Script URI: ${scriptUri}');
+                console.log('🚀 Webview script starting...');
+                console.log('📍 Script URI: ${scriptUri}');
+                console.log('🖼️ Logo URI: ${logoUri}');
                 
                 // Make logo URI available globally
                 window.extensionLogoUri = '${logoUri}';
@@ -296,9 +359,21 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 setTimeout(() => {
                     const loading = document.querySelector('.loading');
                     if (loading && !document.querySelector('.app')) {
-                        loading.innerHTML = '<h2>⚠️ Loading Failed</h2><p>Check the developer console for errors.</p>';
+                        console.error('❌ React app failed to load within 5 seconds');
+                        loading.innerHTML = '<h2>⚠️ Loading Failed</h2><p>React app failed to load. Check the developer console for errors.</p>';
                     }
                 }, 5000);
+                
+                // Check if the main script loads
+                const script = document.querySelector('script[src="${scriptUri}"]');
+                if (script) {
+                    script.addEventListener('load', () => {
+                        console.log('✅ Main script loaded successfully');
+                    });
+                    script.addEventListener('error', (e) => {
+                        console.error('❌ Failed to load main script:', e);
+                    });
+                }
             </script>
             <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>

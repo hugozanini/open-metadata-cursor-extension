@@ -23,10 +23,12 @@
     "data-catalog",
     "lineage",
     "ai",
-    "data-discovery"
+    "data-discovery",
+    "voice-coding",
+    "dictation"
   ],
   "activationEvents": [
-    "onView:openmetadataExplorer"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -65,6 +67,31 @@
           "type": "string",
           "description": "OpenMetadata authentication token (leave empty if auth is disabled)",
           "default": ""
+        },
+        "openmetadataExplorer.deepgramApiKey": {
+          "type": "string",
+          "description": "Deepgram API key for voice features",
+          "default": ""
+        },
+        "openmetadataExplorer.openaiApiKey": {
+          "type": "string",
+          "description": "OpenAI API key for text processing",
+          "default": ""
+        },
+        "openmetadataExplorer.microphone.deviceMacOS": {
+          "type": "string",
+          "description": "Microphone device to use on macOS (leave empty for default)",
+          "default": ""
+        },
+        "openmetadataExplorer.microphone.deviceWindows": {
+          "type": "string",
+          "description": "Microphone device to use on Windows (leave empty for default)",
+          "default": ""
+        },
+        "openmetadataExplorer.microphone.deviceLinux": {
+          "type": "string",
+          "description": "Microphone device to use on Linux (leave empty for default)",
+          "default": ""
         }
       }
     },
@@ -73,6 +100,22 @@
         "command": "openmetadataExplorer.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "openmetadataExplorer.openVibeCoder",
+        "title": "Open Voice Coding Assistant"
+      },
+      {
+        "command": "openmetadataExplorer.toggleDictation",
+        "title": "Toggle Dictation"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "openmetadataExplorer.toggleDictation",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "!inDebugRepl"
       }
     ]
   },
@@ -88,6 +131,7 @@
   "devDependencies": {
     "@types/node": "16.x",
     "@types/vscode": "^1.74.0",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "css-loader": "^6.7.1",
@@ -99,11 +143,15 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "@deepgram/sdk": "^3.0.0",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
     "elkjs": "^0.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "reactflow": "^11.11.4"
+    "reactflow": "^11.11.4",
+    "speex-resampler": "^3.0.1",
+    "ws": "^8.16.0",
+    "zod": "^3.22.4"
   }
 }
