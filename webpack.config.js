@@ -78,5 +78,38 @@ module.exports = [
       ]
     },
     devtool: 'nosources-source-map'
+  },
+  // Whisper Worker
+  {
+    target: ['webworker'],
+    mode: 'none',
+    entry: './src/workers/whisperWorker.ts',
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'whisperWorker.js'
+    },
+    resolve: {
+      extensions: ['.ts', '.js']
+    },
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          exclude: /node_modules/,
+          use: [
+            {
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: true,
+                compilerOptions: {
+                  skipLibCheck: true
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    devtool: 'nosources-source-map'
   }
 ];

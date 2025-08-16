@@ -17,6 +17,11 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
     const [hasDeepgramKey, setHasDeepgramKey] = useState(false);
     const [showApiKeys, setShowApiKeys] = useState(false);
     const [micTestResult, setMicTestResult] = useState<{success: boolean, message: string} | null>(null);
+    const [isModelLoaded, setIsModelLoaded] = useState(false);
+    const [isModelLoading, setIsModelLoading] = useState(false);
+    const [progressItems, setProgressItems] = useState<any[]>([]);
+    const [whisperWorker, setWhisperWorker] = useState<Worker | null>(null);
+    const [workerBlobUrl, setWorkerBlobUrl] = useState<string | null>(null);
     const [cursorPosition, setCursorPosition] = useState(0);
     const [sessionStartPosition, setSessionStartPosition] = useState(0); // Where current session started
     const [currentSessionText, setCurrentSessionText] = useState(''); // Track current recording session
@@ -95,7 +100,23 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                     }
                     break;
                 case 'apiKeyStatus':
+                    // For Whisper, hasDeepgramKey actually means "model is ready"
                     setHasDeepgramKey(message.hasDeepgramKey);
+                    setIsModelLoaded(message.hasDeepgramKey);
+                    break;
+                case 'modelLoadProgress':
+                    setProgressItems(message.progress || []);
+                    setIsModelLoading(true);
+                    break;
+                case 'modelReady':
+                    setIsModelLoaded(true);
+                    setIsModelLoading(false);
+                    setProgressItems([]);
+                    setHasDeepgramKey(true); // For compatibility with existing UI logic
+                    break;
+                case 'loadModelInWebview':
+                    // Create worker and start loading model
+                    handleCreateWorkerAndLoadModel();
                     break;
                 case 'microphoneTestResult':
                     setMicTestResult({
@@ -115,6 +136,18 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
     }, [isOpen, vscode]);
+
+    // Cleanup worker on unmount
+    useEffect(() => {
+        return () => {
+            if (whisperWorker) {
+                whisperWorker.terminate();
+            }
+            if (workerBlobUrl) {
+                URL.revokeObjectURL(workerBlobUrl);
+            }
+        };
+    }, [whisperWorker, workerBlobUrl]);
 
     const handleToggleDictation = () => {
         vscode.postMessage({ type: 'toggleDictation' });
@@ -182,6 +215,89 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
         setCursorPosition(target.selectionStart);
     };
 
+    const handleLoadModel = () => {
+        setIsModelLoading(true);
+        vscode.postMessage({ type: 'loadWhisperModel' });
+    };
+
+    const handleCreateWorkerAndLoadModel = async () => {
+        try {
+            setIsModelLoading(true);
+            
+            // Create worker using blob URL to bypass cross-origin restrictions
+            const workerUri = (window as any).whisperWorkerUri;
+            if (!workerUri) {
+                throw new Error('Worker URI not available');
+            }
+            
+            // Fetch the worker script and create a blob URL
+            const response = await fetch(workerUri);
+            const workerScript = await response.text();
+            const blob = new Blob([workerScript], { type: 'application/javascript' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const worker = new Worker(blobUrl);
+            setWhisperWorker(worker);
+            setWorkerBlobUrl(blobUrl);
+            
+            // Set up worker message handling
+            worker.onmessage = (e) => {
+                const data = e.data;
+                console.log('Worker message:', data);
+                
+                // Forward worker messages to extension
+                vscode.postMessage({
+                    type: 'workerMessage',
+                    data: data
+                });
+                
+                // Handle local state updates
+                switch (data.status) {
+                    case 'loading':
+                        console.log('Model loading:', data.data);
+                        break;
+                    case 'initiate':
+                        setProgressItems(prev => [...prev, data]);
+                        break;
+                    case 'progress':
+                        setProgressItems(prev => 
+                            prev.map(item => 
+                                item.file === data.file ? { ...item, ...data } : item
+                            )
+                        );
+                        break;
+                    case 'done':
+                        setProgressItems(prev => 
+                            prev.filter(item => item.file !== data.file)
+                        );
+                        break;
+                    case 'ready':
+                        setIsModelLoaded(true);
+                        setIsModelLoading(false);
+                        setProgressItems([]);
+                        setHasDeepgramKey(true);
+                        break;
+                    case 'error':
+                        setIsModelLoading(false);
+                        console.error('Worker error:', data.error);
+                        break;
+                }
+            };
+            
+            worker.onerror = (error) => {
+                console.error('Worker error:', error);
+                setIsModelLoading(false);
+            };
+            
+            // Start loading model
+            worker.postMessage({ type: 'load' });
+            
+        } catch (error) {
+            console.error('Failed to create worker:', error);
+            setIsModelLoading(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     const needsSetup = !hasDeepgramKey;
@@ -196,71 +312,65 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
 
                 {needsSetup && (
                     <div className="setup-banner">
-                        <h3>Setup Required</h3>
-                        <p>Configure your Deepgram API key to enable voice features:</p>
-                        <div className="api-keys-status">
-                            <div className={`key-status ${hasDeepgramKey ? 'configured' : 'missing'}`}>
-                                Deepgram API: {hasDeepgramKey ? '✓ Configured' : '✗ Missing'}
+                        <h3>Model Setup Required</h3>
+                        <p>Load the Whisper model for local speech recognition:</p>
+                        <div className="model-status">
+                            <div className={`key-status ${isModelLoaded ? 'configured' : 'missing'}`}>
+                                Whisper Model: {isModelLoaded ? '✓ Loaded' : '✗ Not Loaded'}
                             </div>
                         </div>
                         <button 
                             className="setup-button"
-                            onClick={() => setShowApiKeys(!showApiKeys)}
+                            onClick={handleLoadModel}
+                            disabled={isModelLoading}
                         >
-                            {showApiKeys ? 'Hide' : 'Configure API Key'}
+                            {isModelLoading ? 'Loading Model...' : 'Load Model'}
                         </button>
-                    </div>
-                )}
-
-                {showApiKeys && (
-                    <div className="api-keys-config">
-                        <ApiKeyInput
-                            label="Deepgram API Key"
-                            placeholder="Enter your Deepgram API key..."
-                            onSave={(key) => handleSaveApiKey('deepgram', key)}
-                            isConfigured={hasDeepgramKey}
-                        />
-                        <button 
-                            className="test-mic-button"
-                            onClick={handleTestMicrophone}
-                        >
-                            Test Microphone
-                        </button>
+                        
+                        {isModelLoading && (
+                            <div className="model-progress">
+                                <p>Loading Whisper model (~200MB)...</p>
+                                {progressItems.map((item, index) => (
+                                    <div key={item.file || index} className="progress-item">
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-fill" 
+                                                style={{ width: `${item.progress || 0}%` }}
+                                            />
+                                        </div>
+                                        <span className="progress-text">
+                                            {item.file} ({(item.progress || 0).toFixed(1)}%)
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
                 <div className="voice-to-text-section">
                     <div className="prompt-info">
                         <h4>Instructions:</h4>
-                        <p>Configure your Deepgram API key, test your microphone, then start recording. Click in the text area to position your cursor where you want new transcriptions to be inserted. Text is never replaced - recordings always insert at cursor position, preserving existing text.</p>
+                        <p>Load the Whisper model, test your microphone, then start recording. Click in the text area to position your cursor where you want new transcriptions to be inserted. Text is never replaced - recordings always insert at cursor position, preserving existing text.</p>
                     </div>
 
-                    {/* Always show API key configuration */}
-                    <div className="api-keys-config">
-                        <ApiKeyInput
-                            label="Deepgram API Key"
-                            placeholder="Enter your Deepgram API key..."
-                            onSave={(key) => handleSaveApiKey('deepgram', key)}
-                            isConfigured={hasDeepgramKey}
-                        />
+                    {/* Microphone test section */}
+                    <div className="microphone-test-section">
+                        <button 
+                            className="test-mic-button"
+                            onClick={handleTestMicrophone}
+                        >
+                            🎤 Test Microphone
+                        </button>
                         
-                        <div className="microphone-test-section">
-                            <button 
-                                className="test-mic-button"
-                                onClick={handleTestMicrophone}
-                            >
-                                🎤 Test Microphone
-                            </button>
-                            
-                            {micTestResult && (
-                                <div className={`mic-test-result ${micTestResult.success ? 'success' : 'error'}`}>
-                                    <span className="result-icon">
-                                        {micTestResult.success ? '✅' : '❌'}
-                                    </span>
-                                    <span className="result-message">{micTestResult.message}</span>
-                                </div>
-                            )}
-                        </div>
+                        {micTestResult && (
+                            <div className={`mic-test-result ${micTestResult.success ? 'success' : 'error'}`}>
+                                <span className="result-icon">
+                                    {micTestResult.success ? '✅' : '❌'}
+                                </span>
+                                <span className="result-message">{micTestResult.message}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="recording-section">

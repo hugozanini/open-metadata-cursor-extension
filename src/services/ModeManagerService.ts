@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
-import { DeepgramService } from './DeepgramService'
+import { WhisperService } from './WhisperService'
 
 export class ModeManagerService {
-  public readonly deepgramService: DeepgramService
+  public readonly whisperService: WhisperService
   private isInitialized = false
   private finalTranscripts: string[] = []
   private interimTranscript = ''
@@ -14,8 +14,8 @@ export class ModeManagerService {
   constructor(private context: vscode.ExtensionContext) {
     console.log('ModeManagerService constructor')
     
-    // Initialize Deepgram service (will be initialized in the initialize method)
-    this.deepgramService = new DeepgramService(context)
+    // Initialize Whisper service (will be initialized in the initialize method)
+    this.whisperService = new WhisperService(context)
 
     // Register toggle command
     context.subscriptions.push(
@@ -34,11 +34,16 @@ export class ModeManagerService {
     }
     
     try {
-      await this.deepgramService.initialize()
-      console.log('Deepgram service initialized successfully')
+      // Set up message handler before initializing
+      this.whisperService.setMessageHandler((message: any) => {
+        this.sendMessage(message)
+      })
+      
+      await this.whisperService.initialize()
+      console.log('Whisper service initialized successfully')
     } catch (error) {
-      console.warn('Failed to initialize Deepgram service:', error)
-      // Continue initialization even if Deepgram fails
+      console.warn('Failed to initialize Whisper service:', error)
+      // Continue initialization even if Whisper fails
     }
     
     try {
@@ -54,7 +59,7 @@ export class ModeManagerService {
 
   private setupTranscriptListeners() {
     console.log('Setting up transcript listeners')
-    this.deepgramService.onTranscript((text: string, isFinal: boolean) => {
+    this.whisperService.onTranscript((text: string, isFinal: boolean) => {
       console.log('Received transcript:', text, 'isFinal:', isFinal, 'Dictation Active:', this.isDictationActive)
       if (this.isDictationActive) {
         if (isFinal) {
@@ -95,8 +100,8 @@ export class ModeManagerService {
       // Clear session arrays for new recording session
       this.finalTranscripts = []
       this.interimTranscript = ''
-      console.log('Starting dictation in DeepgramService...')
-      await this.deepgramService.startDictation()
+      console.log('Starting dictation in WhisperService...')
+      await this.whisperService.startDictation()
       console.log('Dictation started successfully')
       this.sendMessage({ 
         type: 'updateStatus', 
@@ -117,7 +122,7 @@ export class ModeManagerService {
     if (!this.isDictationActive) return
     this.isDictationActive = false
     try {
-      await this.deepgramService.stopDictation()
+      await this.whisperService.stopDictation()
       // Don't auto-copy, let user decide when to copy
     } catch (error) {
       console.error('Failed to stop dictation:', error)
@@ -152,11 +157,30 @@ export class ModeManagerService {
         await this.toggleDictation()
         break
       
+      case 'loadWhisperModel':
+        try {
+          await this.whisperService.loadModel()
+          return { type: 'modelLoadStarted' }
+        } catch (error) {
+          console.error('Failed to load Whisper model:', error)
+          return { 
+            type: 'error', 
+            message: error instanceof Error ? error.message : 'Failed to load model' 
+          }
+        }
+      
       case 'getApiKeyStatus':
-        const hasDeepgramKey = !!(await this.context.secrets.get('openmetadataExplorer.deepgramApiKey'))
+        // For Whisper, we check model status instead of API key
         return { 
           type: 'apiKeyStatus', 
-          hasDeepgramKey
+          hasDeepgramKey: this.whisperService.isModelReady() // Use model ready status
+        }
+      
+      case 'getModelStatus':
+        return {
+          type: 'modelStatus',
+          isModelLoaded: this.whisperService.isModelReady(),
+          loadingProgress: this.whisperService.getLoadingProgress()
         }
       
       case 'saveApiKey':
@@ -165,7 +189,7 @@ export class ModeManagerService {
           vscode.window.showInformationMessage('Deepgram API key saved')
           // Reinitialize the service with the new key
           try {
-            this.deepgramService.updateApiKey(message.key)
+            // Whisper doesn't need API key - this case is no longer needed
           } catch (error) {
             console.error('Failed to update Deepgram API key:', error)
           }
@@ -214,12 +238,17 @@ export class ModeManagerService {
           console.error('Failed to copy to clipboard:', error)
         }
         break
+      
+      case 'workerMessage':
+        // Forward worker messages from webview to WhisperService
+        this.whisperService.handleWorkerMessage(message.data)
+        break
     }
   }
 
   dispose() {
     if (this.isDictationActive) {
-      this.deepgramService.stopDictation()
+      this.whisperService.dispose()
     }
   }
 }
