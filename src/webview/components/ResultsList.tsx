@@ -21,13 +21,15 @@ interface ResultsListProps {
     loading: boolean;
     searchQuery: string;
     onViewLineage?: (tableFqn: string, tableName: string) => void;
+
 }
 
 export const ResultsList: React.FC<ResultsListProps> = ({ 
     results, 
     loading, 
     searchQuery,
-    onViewLineage
+    onViewLineage,
+
 }) => {
     if (loading) {
         return (
@@ -64,7 +66,13 @@ export const ResultsList: React.FC<ResultsListProps> = ({
                             <span className="feature-icon">🔗</span>
                             <span>Discover relationships between tables</span>
                         </div>
+                        <div className="feature-item">
+                            <span className="feature-icon">🎭</span>
+                            <span>Real-time face mesh detection</span>
+                        </div>
                     </div>
+                    
+
                 </div>
             </div>
         );

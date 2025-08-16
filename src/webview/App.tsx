@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AIInsights } from './components/AIInsights';
 import { ConnectionDots } from './components/ConnectionDots';
 import { DynamicSuggestions } from './components/DynamicSuggestions';
+
 import LineageModal from './components/Lineage/LineageModal';
 import { ResultsList } from './components/ResultsList';
 import { SearchInterface } from './components/SearchInterface';
@@ -64,6 +65,8 @@ export const App: React.FC = () => {
         tableFqn: '',
         tableName: '',
     });
+
+
 
     useEffect(() => {
         // Request configuration when component mounts
@@ -164,6 +167,8 @@ export const App: React.FC = () => {
         });
     };
 
+
+
     // Hide loading message when React app mounts
     useEffect(() => {
         const loading = document.querySelector('.loading');
@@ -197,6 +202,7 @@ export const App: React.FC = () => {
                         onKeyPress={handleKeyPress}
                         loading={loading}
                         onExampleSearch={handleExampleSearch}
+
                         compact={true}
                     />
                     {searchQuery.trim() === '' && (
@@ -224,6 +230,7 @@ export const App: React.FC = () => {
                     loading={loading}
                     searchQuery={searchQuery}
                     onViewLineage={handleViewLineage}
+
                 />
             </main>
 
@@ -234,6 +241,8 @@ export const App: React.FC = () => {
                 isOpen={lineageModal.isOpen}
                 onClose={handleCloseLineage}
             />
+
+
         </div>
     );
 };

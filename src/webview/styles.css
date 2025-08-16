@@ -457,6 +457,13 @@
     font-size: 18px;
 }
 
+.welcome-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
 /* No results state */
 .no-results-state {
     text-align: center;
@@ -1935,3 +1942,4 @@
         justify-content: center;
     }
 }
+

@@ -7,6 +7,7 @@ interface SearchInterfaceProps {
     onKeyPress: (event: React.KeyboardEvent) => void;
     loading: boolean;
     onExampleSearch: (query: string) => void;
+
     compact?: boolean;
 }
 
@@ -17,6 +18,7 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
     onKeyPress,
     loading,
     onExampleSearch,
+
     compact = false
 }) => {
     const exampleQueries = [
@@ -99,6 +101,7 @@ export const SearchInterface: React.FC<SearchInterfaceProps> = ({
                         {query}
                     </button>
                 ))}
+
             </div>
         </div>
     );
