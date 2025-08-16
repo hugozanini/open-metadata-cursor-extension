@@ -11,6 +11,7 @@ interface VibeCoderModalProps {
 }
 
 const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode }) => {
+    console.log('VibeCoderModal component rendered, isOpen:', isOpen);
     const [transcript, setTranscript] = useState('');
     const [status, setStatus] = useState('Ready');
     const [isRecording, setIsRecording] = useState(false);
@@ -29,11 +30,34 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
     const [textAfterSession, setTextAfterSession] = useState(''); // Text after current session
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Separate effect for initial setup when modal opens
     useEffect(() => {
         if (!isOpen) return;
 
         // Request initial data when modal opens
         vscode.postMessage({ type: 'getApiKeyStatus' });
+        vscode.postMessage({ type: 'getModelStatus' });
+    }, [isOpen, vscode]);
+
+    // Separate effect for worker recreation logic
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        console.log('Checking worker state on modal open:', {
+            isModelLoaded,
+            hasWorker: !!whisperWorker,
+            isModelLoading
+        });
+        
+        if (isModelLoaded && !whisperWorker && !isModelLoading) {
+            console.log('Model is loaded but worker is missing, recreating worker...');
+            handleCreateWorkerAndLoadModel();
+        }
+    }, [isOpen, isModelLoaded, whisperWorker, isModelLoading]);
+
+    // Message handler effect (stable, no dependencies on changing state)
+    useEffect(() => {
+        if (!isOpen) return;
 
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
@@ -42,65 +66,75 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                 case 'updateTranscript':
                     // Insert new text using pre-captured before/after session text
                     if (message.text) {
-                        const newSessionText = message.text;
+                        setCurrentSessionText(message.text);
                         
-                        // Build new text using the captured before/after session text
-                        const newText = textBeforeSession + newSessionText + textAfterSession;
-                        
-                        // Update states
-                        setCurrentSessionText(newSessionText);
-                        setTranscript(newText);
-                        
-                        // Update cursor position to end of current session text
-                        const newCursorPos = textBeforeSession.length + newSessionText.length;
-                        setCursorPosition(newCursorPos);
-                        
-                        // Focus and set cursor position in textarea
-                        setTimeout(() => {
-                            if (textareaRef.current) {
-                                textareaRef.current.focus();
-                                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-                            }
-                        }, 0);
+                        // Use functional updates to safely access current state
+                        setTextBeforeSession(prevBefore => {
+                            setTextAfterSession(prevAfter => {
+                                const newText = prevBefore + message.text + prevAfter;
+                                setTranscript(newText);
+                                
+                                // Update cursor position to end of current session text
+                                const newCursorPos = prevBefore.length + message.text.length;
+                                setCursorPosition(newCursorPos);
+                                
+                                // Focus and set cursor position in textarea
+                                setTimeout(() => {
+                                    if (textareaRef.current) {
+                                        textareaRef.current.focus();
+                                        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                                    }
+                                }, 0);
+                                
+                                return prevAfter; // Don't change textAfterSession
+                            });
+                            return prevBefore; // Don't change textBeforeSession
+                        });
                     }
                     break;
                 case 'updateStatus':
                     setStatus(message.text);
-                    const wasRecording = isRecording;
                     const nowRecording = message.text === 'Recording...';
-                    setIsRecording(nowRecording);
                     
-                    // When starting recording, capture the text before/after cursor position
-                    if (!wasRecording && nowRecording) {
-                        // Get current cursor position from textarea
-                        const currentPos = textareaRef.current ? textareaRef.current.selectionStart : cursorPosition;
-                        const currentTranscript = transcript;
+                    setIsRecording(prevIsRecording => {
+                        const wasRecording = prevIsRecording;
                         
-                        // Capture text before and after the cursor position
-                        const beforeText = currentTranscript.slice(0, currentPos);
-                        const afterText = currentTranscript.slice(currentPos);
-                        
-
-                        
-                        // Set the session boundaries
-                        setSessionStartPosition(currentPos);
-                        setCursorPosition(currentPos);
-                        setTextBeforeSession(beforeText);
-                        setTextAfterSession(afterText);
-                        setCurrentSessionText(''); // Clear session text for new recording
-                    }
-                    // When stopping recording, commit the session (currentSessionText is already in transcript)
-                    if (wasRecording && !nowRecording) {
-                        // Session is committed, clear session tracking
-                        setCurrentSessionText('');
-                        // Update cursor position to end of the inserted text for potential next recording
-                        if (textareaRef.current) {
-                            setCursorPosition(textareaRef.current.selectionStart);
+                        // When starting recording, capture the text before/after cursor position
+                        if (!wasRecording && nowRecording) {
+                            setTranscript(currentTranscript => {
+                                // Get current cursor position from textarea
+                                const currentPos = textareaRef.current ? textareaRef.current.selectionStart : 0;
+                                
+                                // Capture text before and after the cursor position
+                                const beforeText = currentTranscript.slice(0, currentPos);
+                                const afterText = currentTranscript.slice(currentPos);
+                                
+                                // Set the session boundaries
+                                setSessionStartPosition(currentPos);
+                                setCursorPosition(currentPos);
+                                setTextBeforeSession(beforeText);
+                                setTextAfterSession(afterText);
+                                setCurrentSessionText(''); // Clear session text for new recording
+                                
+                                return currentTranscript; // Don't change transcript
+                            });
                         }
-                    }
+                        // When stopping recording, commit the session (currentSessionText is already in transcript)
+                        if (wasRecording && !nowRecording) {
+                            // Session is committed, clear session tracking
+                            setCurrentSessionText('');
+                            // Update cursor position to end of the inserted text for potential next recording
+                            if (textareaRef.current) {
+                                setCursorPosition(textareaRef.current.selectionStart);
+                            }
+                        }
+                        
+                        return nowRecording;
+                    });
                     break;
                 case 'apiKeyStatus':
                     // For Whisper, hasDeepgramKey actually means "model is ready"
+                    console.log('Received apiKeyStatus:', message);
                     setHasDeepgramKey(message.hasDeepgramKey);
                     setIsModelLoaded(message.hasDeepgramKey);
                     break;
@@ -116,7 +150,34 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                     break;
                 case 'loadModelInWebview':
                     // Create worker and start loading model
+                    console.log('loadModelInWebview message received');
                     handleCreateWorkerAndLoadModel();
+                    break;
+                case 'generateAudio':
+                    // Forward audio to worker for transcription
+                    console.log('generateAudio message received. Worker state:', {
+                        hasWorker: !!whisperWorker,
+                        hasData: !!message.data,
+                        dataType: typeof message.data,
+                        audioLength: message.data?.audio?.length
+                    });
+                    
+                    // Use current whisperWorker from closure
+                    setWhisperWorker(currentWorker => {
+                        if (currentWorker && message.data) {
+                            console.log('Forwarding audio to worker for transcription, audio length:', message.data.audio?.length);
+                            currentWorker.postMessage({
+                                type: 'generate',
+                                data: message.data
+                            });
+                        } else {
+                            console.warn('Cannot process audio: worker not available or no data', {
+                                hasWorker: !!currentWorker,
+                                hasData: !!message.data
+                            });
+                        }
+                        return currentWorker; // Don't change the worker
+                    });
                     break;
                 case 'microphoneTestResult':
                     setMicTestResult({
@@ -135,9 +196,14 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [isOpen, vscode]);
+    }, [isOpen]);
 
     // Cleanup worker on unmount
+    // Monitor whisperWorker state changes
+    useEffect(() => {
+        console.log('whisperWorker state changed:', !!whisperWorker);
+    }, [whisperWorker]);
+
     useEffect(() => {
         return () => {
             if (whisperWorker) {
@@ -222,6 +288,7 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
 
     const handleCreateWorkerAndLoadModel = async () => {
         try {
+            console.log('handleCreateWorkerAndLoadModel called. Current worker state:', !!whisperWorker);
             setIsModelLoading(true);
             
             // Create worker using blob URL to bypass cross-origin restrictions
@@ -230,6 +297,8 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                 throw new Error('Worker URI not available');
             }
             
+            console.log('Worker URI available:', workerUri);
+            
             // Fetch the worker script and create a blob URL
             const response = await fetch(workerUri);
             const workerScript = await response.text();
@@ -237,8 +306,18 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
             const blobUrl = URL.createObjectURL(blob);
             
             const worker = new Worker(blobUrl);
+            console.log('Worker created successfully:', worker);
             setWhisperWorker(worker);
             setWorkerBlobUrl(blobUrl);
+            console.log('Worker state set, whisperWorker should now be available');
+            
+            // Verify the state was set
+            setTimeout(() => {
+                console.log('Checking worker state after setState:', {
+                    workerExists: !!worker,
+                    stateUpdated: 'will check in next render'
+                });
+            }, 100);
             
             // Set up worker message handling
             worker.onmessage = (e) => {

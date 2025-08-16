@@ -53,6 +53,12 @@ export class WhisperService {
       // Just initialize the dictation service without worker for now
       this.dictationService = new DictationService(null, this.context)
       
+      // Set up message handler to forward messages to webview
+      this.dictationService.setMessageHandler((message) => {
+        console.log('DictationService sending message to webview:', message)
+        this.sendMessage(message)
+      })
+      
       this.isInitialized = true
       console.log('WhisperService initialized successfully (worker will be created in webview)')
     } catch (error) {

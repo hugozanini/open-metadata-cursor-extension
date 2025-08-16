@@ -14,6 +14,7 @@ export class DictationService {
   private eventEmitter = new EventEmitter()
   private audioChunks: Float32Array[] = []
   private language = 'en' // Default language
+  private messageHandler?: (message: any) => void
 
   constructor(
     private whisperWorker: Worker | null,
@@ -29,6 +30,16 @@ export class DictationService {
     this.state.statusBarItem.show()
   }
 
+  setMessageHandler(handler: (message: any) => void) {
+    this.messageHandler = handler
+  }
+
+  private sendMessage(message: any) {
+    if (this.messageHandler) {
+      this.messageHandler(message)
+    }
+  }
+
   async startDictation(): Promise<void> {
     console.log('DictationService.startDictation called')
     if (this.state.isActive) {
@@ -37,8 +48,9 @@ export class DictationService {
       console.log('Previous dictation stopped')
     }
 
-    if (!this.whisperWorker) {
-      throw new Error('Whisper worker not initialized.')
+    // Check if we have a message handler (connection to webview worker)
+    if (!this.messageHandler) {
+      throw new Error('Message handler not initialized. Cannot communicate with webview worker.')
     }
 
     try {
@@ -74,16 +86,30 @@ export class DictationService {
 
       // Collect audio chunks for processing
       audioStream.on('data', (chunk: Buffer) => {
+        console.log('Received audio chunk:', chunk.length, 'bytes')
+        
         // Convert Buffer to Float32Array for Whisper
         const audioData = this.convertBufferToFloat32Array(chunk)
+        console.log('Converted to Float32Array:', audioData.length, 'samples')
         this.audioChunks.push(audioData)
+        
+        const totalSamples = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0)
+        console.log('Audio chunks collected:', this.audioChunks.length, 'chunks, total samples:', totalSamples)
         
         // Process audio in chunks (every 2 seconds worth of data)
         // At 16kHz, 2 seconds = 32,000 samples
-        const totalSamples = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0)
         if (totalSamples >= 32000) {
+          console.log('Processing audio chunks - threshold reached')
           this.processAudioChunks()
         }
+      })
+
+      audioStream.on('end', () => {
+        console.log('Audio stream ended')
+      })
+
+      audioStream.on('close', () => {
+        console.log('Audio stream closed')
       })
 
       console.log('All handlers set up successfully')
@@ -111,9 +137,17 @@ export class DictationService {
   }
 
   private processAudioChunks(): void {
-    if (this.audioChunks.length === 0 || !this.whisperWorker) {
+    if (this.audioChunks.length === 0) {
+      console.log('No audio chunks to process')
       return
     }
+
+    if (!this.messageHandler) {
+      console.log('No message handler available, cannot process audio')
+      return
+    }
+
+    console.log('processAudioChunks called with', this.audioChunks.length, 'chunks')
 
     // Combine all audio chunks into a single Float32Array
     const totalLength = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0)
@@ -133,9 +167,9 @@ export class DictationService {
 
     console.log('Processing audio chunk:', audioToProcess.length, 'samples')
     
-    // Send to Whisper worker
-    this.whisperWorker.postMessage({
-      type: 'generate',
+    // Send to webview worker via message handler
+    this.sendMessage({
+      type: 'generateAudio',
       data: { audio: audioToProcess, language: this.language }
     })
 
@@ -179,13 +213,20 @@ export class DictationService {
     console.log('stopDictation called')
 
     if (this.state.mic) {
+      console.log('Stopping microphone recording...')
       this.state.mic.stopRecording()
       this.state.mic = null
     }
 
     // Process any remaining audio chunks before stopping
+    const totalSamples = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0)
+    console.log('stopDictation: audioChunks.length:', this.audioChunks.length, 'totalSamples:', totalSamples)
+    
     if (this.audioChunks.length > 0) {
+      console.log('Processing remaining audio chunks:', this.audioChunks.length, 'chunks, total samples:', totalSamples)
       this.processAudioChunks()
+    } else {
+      console.log('No remaining audio chunks to process')
     }
 
     this.state.isActive = false
@@ -194,14 +235,10 @@ export class DictationService {
   }
 
   onTranscript(callback: (text: string, isFinal: boolean) => void) {
-    if (!this.whisperWorker) {
-      console.warn('Cannot set up transcript listener: Whisper worker not initialized')
-      // Return a no-op function
-      return () => {}
-    }
-    
+    console.log('Setting up transcript listener')
     this.eventEmitter.on('transcript', callback)
     return () => {
+      console.log('Removing transcript listener')
       this.eventEmitter.removeListener('transcript', callback)
     }
   }

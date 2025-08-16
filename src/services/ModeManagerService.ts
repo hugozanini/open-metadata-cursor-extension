@@ -7,6 +7,7 @@ export class ModeManagerService {
   private finalTranscripts: string[] = []
   private interimTranscript = ''
   private isDictationActive = false
+  private finalTranscriptionTimeout?: NodeJS.Timeout
   
   // Message handler for webview communication
   private messageHandler?: (message: any) => void
@@ -60,20 +61,48 @@ export class ModeManagerService {
   private setupTranscriptListeners() {
     console.log('Setting up transcript listeners')
     this.whisperService.onTranscript((text: string, isFinal: boolean) => {
-      console.log('Received transcript:', text, 'isFinal:', isFinal, 'Dictation Active:', this.isDictationActive)
+      console.log('🎤 Received transcript:', text, 'isFinal:', isFinal, 'isDictationActive:', this.isDictationActive)
       if (this.isDictationActive) {
+        console.log('✅ Processing transcript (dictation is active)')
         if (isFinal) {
           this.finalTranscripts.push(text)
           this.interimTranscript = ''
+          
+          // If we're waiting for final transcription after stopping, mark as complete
+          if (this.finalTranscriptionTimeout) {
+            console.log('🏁 Final transcription received, marking dictation as inactive')
+            clearTimeout(this.finalTranscriptionTimeout)
+            this.finalTranscriptionTimeout = undefined
+            this.isDictationActive = false
+            
+            // Send the final transcript first
+            const newText = this.finalTranscripts.join(' ')
+            console.log('📤 Sending final transcript to UI:', newText)
+            this.sendMessage({ 
+              type: 'updateTranscript', 
+              text: newText,
+              isAppending: true
+            })
+            
+            // Then update status to Ready
+            this.sendMessage({ 
+              type: 'updateStatus', 
+              text: 'Ready'
+            })
+            return
+          }
         } else {
           this.interimTranscript = text
         }
         const newText = this.finalTranscripts.join(' ') + (this.interimTranscript ? ' ' + this.interimTranscript : '')
+        console.log('📤 Sending transcript to UI:', newText)
         this.sendMessage({ 
           type: 'updateTranscript', 
           text: newText,
           isAppending: true // Signal that this should be appended to existing text
         })
+      } else {
+        console.log('❌ Ignoring transcript (dictation not active)')
       }
     })
   }
@@ -120,13 +149,36 @@ export class ModeManagerService {
   private async stopDictation() {
     console.log('Stopping dictation')
     if (!this.isDictationActive) return
-    this.isDictationActive = false
+    
     try {
+      // First, stop the microphone recording
       await this.whisperService.stopDictation()
-      // Don't auto-copy, let user decide when to copy
+      console.log('Microphone stopped, waiting for final transcription...')
+      
+      // Update UI to show processing state but keep isDictationActive true
+      // until we get the final transcription
+      this.sendMessage({ 
+        type: 'updateStatus', 
+        text: 'Processing...'
+      })
+      
+      // Set a timeout to ensure we don't wait forever
+      const timeoutId = setTimeout(() => {
+        console.log('Timeout waiting for final transcription, marking dictation as inactive')
+        this.isDictationActive = false
+        this.sendMessage({ 
+          type: 'updateStatus', 
+          text: 'Ready'
+        })
+      }, 5000) // 5 second timeout
+      
+      // We'll set isDictationActive = false when we receive the final transcript
+      // in setupTranscriptListeners, or after the timeout
+      this.finalTranscriptionTimeout = timeoutId
+      
     } catch (error) {
       console.error('Failed to stop dictation:', error)
-    } finally {
+      this.isDictationActive = false
       this.sendMessage({ 
         type: 'updateStatus', 
         text: 'Ready'
