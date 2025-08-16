@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface VibeCoderModalProps {
     isOpen: boolean;
@@ -11,58 +11,102 @@ interface VibeCoderModalProps {
 }
 
 const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode }) => {
-    const [currentMode, setCurrentMode] = useState<'vibe' | 'code'>('code');
     const [transcript, setTranscript] = useState('');
-    const [promptOutput, setPromptOutput] = useState('');
     const [status, setStatus] = useState('Ready');
-    const [prompts, setPrompts] = useState<any[]>([]);
-    const [currentPromptId, setCurrentPromptId] = useState('default');
     const [isRecording, setIsRecording] = useState(false);
     const [hasDeepgramKey, setHasDeepgramKey] = useState(false);
-    const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
     const [showApiKeys, setShowApiKeys] = useState(false);
+    const [micTestResult, setMicTestResult] = useState<{success: boolean, message: string} | null>(null);
+    const [cursorPosition, setCursorPosition] = useState(0);
+    const [sessionStartPosition, setSessionStartPosition] = useState(0); // Where current session started
+    const [currentSessionText, setCurrentSessionText] = useState(''); // Track current recording session
+    const [textBeforeSession, setTextBeforeSession] = useState(''); // Text before current session
+    const [textAfterSession, setTextAfterSession] = useState(''); // Text after current session
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (!isOpen) return;
 
         // Request initial data when modal opens
         vscode.postMessage({ type: 'getApiKeyStatus' });
-        vscode.postMessage({ type: 'getPromptsList' });
 
         const handleMessage = (event: MessageEvent) => {
             const message = event.data;
             
             switch (message.type) {
-                case 'updateMode':
-                    setCurrentMode(message.mode);
-                    break;
                 case 'updateTranscript':
-                    if (message.target === 'transcript') {
-                        setTranscript(message.text);
-                    } else if (message.target === 'prompt-output') {
-                        setPromptOutput(message.text);
-                    }
-                    break;
-                case 'appendTranscript':
-                    if (message.target === 'prompt-output') {
-                        setPromptOutput(prev => prev + message.text);
+                    // Insert new text using pre-captured before/after session text
+                    if (message.text) {
+                        const newSessionText = message.text;
+                        
+                        // Build new text using the captured before/after session text
+                        const newText = textBeforeSession + newSessionText + textAfterSession;
+                        
+                        // Update states
+                        setCurrentSessionText(newSessionText);
+                        setTranscript(newText);
+                        
+                        // Update cursor position to end of current session text
+                        const newCursorPos = textBeforeSession.length + newSessionText.length;
+                        setCursorPosition(newCursorPos);
+                        
+                        // Focus and set cursor position in textarea
+                        setTimeout(() => {
+                            if (textareaRef.current) {
+                                textareaRef.current.focus();
+                                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                            }
+                        }, 0);
                     }
                     break;
                 case 'updateStatus':
-                    if (message.target === 'code-status') {
-                        setStatus(message.text);
-                        setIsRecording(message.text === 'Recording...');
+                    setStatus(message.text);
+                    const wasRecording = isRecording;
+                    const nowRecording = message.text === 'Recording...';
+                    setIsRecording(nowRecording);
+                    
+                    // When starting recording, capture the text before/after cursor position
+                    if (!wasRecording && nowRecording) {
+                        // Get current cursor position from textarea
+                        const currentPos = textareaRef.current ? textareaRef.current.selectionStart : cursorPosition;
+                        const currentTranscript = transcript;
+                        
+                        // Capture text before and after the cursor position
+                        const beforeText = currentTranscript.slice(0, currentPos);
+                        const afterText = currentTranscript.slice(currentPos);
+                        
+
+                        
+                        // Set the session boundaries
+                        setSessionStartPosition(currentPos);
+                        setCursorPosition(currentPos);
+                        setTextBeforeSession(beforeText);
+                        setTextAfterSession(afterText);
+                        setCurrentSessionText(''); // Clear session text for new recording
+                    }
+                    // When stopping recording, commit the session (currentSessionText is already in transcript)
+                    if (wasRecording && !nowRecording) {
+                        // Session is committed, clear session tracking
+                        setCurrentSessionText('');
+                        // Update cursor position to end of the inserted text for potential next recording
+                        if (textareaRef.current) {
+                            setCursorPosition(textareaRef.current.selectionStart);
+                        }
                     }
                     break;
                 case 'apiKeyStatus':
                     setHasDeepgramKey(message.hasDeepgramKey);
-                    setHasOpenAIKey(message.hasOpenAIKey);
                     break;
-                case 'promptsList':
-                    setPrompts(message.prompts);
+                case 'microphoneTestResult':
+                    setMicTestResult({
+                        success: message.success,
+                        message: message.message
+                    });
+                    // Clear the result after 5 seconds
+                    setTimeout(() => setMicTestResult(null), 5000);
                     break;
                 case 'showSuccess':
-                    setStatus('Copied to clipboard!');
+                    setStatus('Text copied to clipboard!');
                     setTimeout(() => setStatus('Ready'), 2000);
                     break;
             }
@@ -72,59 +116,98 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
         return () => window.removeEventListener('message', handleMessage);
     }, [isOpen, vscode]);
 
-    const handleModeSwitch = (mode: 'vibe' | 'code') => {
-        setCurrentMode(mode);
-        vscode.postMessage({ type: 'switchMode', mode });
-    };
-
     const handleToggleDictation = () => {
         vscode.postMessage({ type: 'toggleDictation' });
     };
 
-    const handlePromptChange = (promptId: string) => {
-        setCurrentPromptId(promptId);
-        vscode.postMessage({ type: 'setPrompt', id: promptId });
-    };
-
-    const handleSaveApiKey = (service: 'deepgram' | 'openai', key: string) => {
+    const handleSaveApiKey = (service: 'deepgram', key: string) => {
         vscode.postMessage({ type: 'saveApiKey', service, key });
-        if (service === 'deepgram') setHasDeepgramKey(true);
-        if (service === 'openai') setHasOpenAIKey(true);
+        setHasDeepgramKey(true);
     };
 
     const handleTestMicrophone = () => {
+        setMicTestResult(null); // Clear previous results
         vscode.postMessage({ type: 'testMicrophone' });
+    };
+
+    const handleCopyText = () => {
+        if (transcript.trim()) {
+            navigator.clipboard.writeText(transcript).then(() => {
+                setStatus('Text copied to clipboard!');
+                setTimeout(() => setStatus('Ready'), 2000);
+            }).catch(() => {
+                // Fallback: use VS Code API
+                vscode.postMessage({ type: 'copyToClipboard', text: transcript });
+            });
+        }
+    };
+
+    const handleClearText = () => {
+        setTranscript('');
+        setCurrentSessionText('');
+        setCursorPosition(0);
+        setSessionStartPosition(0);
+        setTextBeforeSession('');
+        setTextAfterSession('');
+        setStatus('Text cleared');
+        setTimeout(() => setStatus('Ready'), 1000);
+        // Focus the textarea after clearing
+        setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                textareaRef.current.setSelectionRange(0, 0);
+            }
+        }, 0);
+    };
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newValue = e.target.value;
+        const newCursorPos = e.target.selectionStart;
+        
+
+        
+        setTranscript(newValue);
+        setCursorPosition(newCursorPos);
+        
+        // If we're not currently recording, clear session tracking since user manually edited
+        if (!isRecording) {
+            setCurrentSessionText('');
+            setTextBeforeSession('');
+            setTextAfterSession('');
+        }
+    };
+
+    const handleCursorPositionChange = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+        const target = e.target as HTMLTextAreaElement;
+        setCursorPosition(target.selectionStart);
     };
 
     if (!isOpen) return null;
 
-    const needsSetup = !hasDeepgramKey || !hasOpenAIKey;
+    const needsSetup = !hasDeepgramKey;
 
     return (
         <div className="vibe-coder-modal">
             <div className="vibe-coder-modal-content">
                 <div className="vibe-coder-header">
-                    <h2>Voice Coding Assistant</h2>
+                    <h2>Voice to Text</h2>
                     <button className="close-button" onClick={onClose}>×</button>
                 </div>
 
                 {needsSetup && (
                     <div className="setup-banner">
                         <h3>Setup Required</h3>
-                        <p>Configure API keys to enable voice features:</p>
+                        <p>Configure your Deepgram API key to enable voice features:</p>
                         <div className="api-keys-status">
                             <div className={`key-status ${hasDeepgramKey ? 'configured' : 'missing'}`}>
                                 Deepgram API: {hasDeepgramKey ? '✓ Configured' : '✗ Missing'}
-                            </div>
-                            <div className={`key-status ${hasOpenAIKey ? 'configured' : 'missing'}`}>
-                                OpenAI API: {hasOpenAIKey ? '✓ Configured' : '✗ Missing'}
                             </div>
                         </div>
                         <button 
                             className="setup-button"
                             onClick={() => setShowApiKeys(!showApiKeys)}
                         >
-                            {showApiKeys ? 'Hide' : 'Configure API Keys'}
+                            {showApiKeys ? 'Hide' : 'Configure API Key'}
                         </button>
                     </div>
                 )}
@@ -137,12 +220,6 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                             onSave={(key) => handleSaveApiKey('deepgram', key)}
                             isConfigured={hasDeepgramKey}
                         />
-                        <ApiKeyInput
-                            label="OpenAI API Key"
-                            placeholder="Enter your OpenAI API key (sk-...)..."
-                            onSave={(key) => handleSaveApiKey('openai', key)}
-                            isConfigured={hasOpenAIKey}
-                        />
                         <button 
                             className="test-mic-button"
                             onClick={handleTestMicrophone}
@@ -152,75 +229,86 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                     </div>
                 )}
 
-                <div className="mode-selector">
-                    <button 
-                        className={`mode-button ${currentMode === 'vibe' ? 'active' : ''}`}
-                        onClick={() => handleModeSwitch('vibe')}
-                        disabled={needsSetup}
-                    >
-                        Vibe Mode
-                    </button>
-                    <button 
-                        className={`mode-button ${currentMode === 'code' ? 'active' : ''}`}
-                        onClick={() => handleModeSwitch('code')}
-                        disabled={needsSetup}
-                    >
-                        Code Mode
-                    </button>
-                </div>
+                <div className="voice-to-text-section">
+                    <div className="prompt-info">
+                        <h4>Instructions:</h4>
+                        <p>Configure your Deepgram API key, test your microphone, then start recording. Click in the text area to position your cursor where you want new transcriptions to be inserted. Text is never replaced - recordings always insert at cursor position, preserving existing text.</p>
+                    </div>
 
-                {currentMode === 'code' && (
-                    <div className="code-mode">
-                        <div className="prompt-selector">
-                            <label htmlFor="prompt-select">Prompt:</label>
-                            <select 
-                                id="prompt-select"
-                                value={currentPromptId}
-                                onChange={(e) => handlePromptChange(e.target.value)}
-                            >
-                                {prompts.map((prompt) => (
-                                    <option key={prompt.id} value={prompt.id}>
-                                        {prompt.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="recording-section">
+                    {/* Always show API key configuration */}
+                    <div className="api-keys-config">
+                        <ApiKeyInput
+                            label="Deepgram API Key"
+                            placeholder="Enter your Deepgram API key..."
+                            onSave={(key) => handleSaveApiKey('deepgram', key)}
+                            isConfigured={hasDeepgramKey}
+                        />
+                        
+                        <div className="microphone-test-section">
                             <button 
-                                className={`record-button ${isRecording ? 'recording' : ''}`}
-                                onClick={handleToggleDictation}
-                                disabled={needsSetup}
+                                className="test-mic-button"
+                                onClick={handleTestMicrophone}
                             >
-                                {isRecording ? '⏹️ Stop' : '🎤 Start Recording'}
+                                🎤 Test Microphone
                             </button>
-                            <div className="status">{status}</div>
+                            
+                            {micTestResult && (
+                                <div className={`mic-test-result ${micTestResult.success ? 'success' : 'error'}`}>
+                                    <span className="result-icon">
+                                        {micTestResult.success ? '✅' : '❌'}
+                                    </span>
+                                    <span className="result-message">{micTestResult.message}</span>
+                                </div>
+                            )}
                         </div>
+                    </div>
 
-                        <div className="transcript-section">
+                    <div className="recording-section">
+                        <button 
+                            className={`record-button ${isRecording ? 'recording' : ''}`}
+                            onClick={handleToggleDictation}
+                            disabled={needsSetup}
+                        >
+                            {isRecording ? '⏹️ Stop Recording' : '🎤 Start Recording'}
+                        </button>
+                        <div className="status">{status}</div>
+                    </div>
+
+                    <div className="transcript-section">
+                        <div className="transcript-header">
                             <h4>Your Speech:</h4>
-                            <div className="transcript-box">
-                                {transcript || 'Your transcribed speech will appear here...'}
+                            <div className="transcript-actions">
+                                <button 
+                                    className="copy-button"
+                                    onClick={handleCopyText}
+                                    disabled={!transcript.trim()}
+                                    title="Copy text to clipboard"
+                                >
+                                    📋 Copy
+                                </button>
+                                <button 
+                                    className="clear-button"
+                                    onClick={handleClearText}
+                                    disabled={!transcript.trim()}
+                                    title="Clear all text"
+                                >
+                                    🗑️ Clear
+                                </button>
                             </div>
                         </div>
-
-                        <div className="output-section">
-                            <h4>AI Response:</h4>
-                            <div className="output-box">
-                                {promptOutput || 'AI-processed response will appear here...'}
-                            </div>
-                        </div>
+                        <textarea
+                            ref={textareaRef}
+                            className="transcript-box editable"
+                            value={transcript}
+                            onChange={handleTextChange}
+                            onSelect={handleCursorPositionChange}
+                            onKeyUp={handleCursorPositionChange}
+                            onClick={handleCursorPositionChange}
+                            placeholder="Your transcribed speech will appear here. Click to position your cursor where you want new recordings to be inserted. Text is never replaced - only inserted at cursor position."
+                            rows={8}
+                        />
                     </div>
-                )}
-
-                {currentMode === 'vibe' && (
-                    <div className="vibe-mode">
-                        <div className="coming-soon">
-                            <h3>Vibe Mode</h3>
-                            <p>Interactive AI conversation mode coming soon!</p>
-                        </div>
-                    </div>
-                )}
+                </div>
             </div>
         </div>
     );

@@ -1,15 +1,8 @@
 import * as vscode from 'vscode'
 import { DeepgramService } from './DeepgramService'
-import { LLMService } from './LLMService'
-import { PromptManagementService } from './PromptManagementService'
-
-export type Mode = 'vibe' | 'code'
 
 export class ModeManagerService {
   public readonly deepgramService: DeepgramService
-  private readonly llmService: LLMService
-  public readonly promptManager: PromptManagementService
-  public currentMode: Mode = 'code'
   private isInitialized = false
   private finalTranscripts: string[] = []
   private interimTranscript = ''
@@ -21,18 +14,12 @@ export class ModeManagerService {
   constructor(private context: vscode.ExtensionContext) {
     console.log('ModeManagerService constructor')
     
-    // Initialize basic services first
-    this.llmService = new LLMService(context)
-    this.promptManager = new PromptManagementService(context)
-    this.promptManager.setOnPromptsChanged(() => this.refreshWebviewPrompts())
-
     // Initialize Deepgram service (will be initialized in the initialize method)
     this.deepgramService = new DeepgramService(context)
 
     // Register toggle command
     context.subscriptions.push(
       vscode.commands.registerCommand('openmetadataExplorer.toggleDictation', async () => {
-        if (this.currentMode !== 'code') return
         await this.toggleDictation()
       })
     )
@@ -68,38 +55,28 @@ export class ModeManagerService {
   private setupTranscriptListeners() {
     console.log('Setting up transcript listeners')
     this.deepgramService.onTranscript((text: string, isFinal: boolean) => {
-      console.log('Received transcript in mode manager:', text, 'isFinal:', isFinal, 'Mode:', this.currentMode, 'Dictation Active:', this.isDictationActive)
-      if (this.currentMode === 'code' && this.isDictationActive) {
+      console.log('Received transcript:', text, 'isFinal:', isFinal, 'Dictation Active:', this.isDictationActive)
+      if (this.isDictationActive) {
         if (isFinal) {
           this.finalTranscripts.push(text)
           this.interimTranscript = ''
         } else {
           this.interimTranscript = text
         }
-        const displayTranscript = this.finalTranscripts.join(' ') + (this.interimTranscript ? ' ' + this.interimTranscript : '')
+        const newText = this.finalTranscripts.join(' ') + (this.interimTranscript ? ' ' + this.interimTranscript : '')
         this.sendMessage({ 
           type: 'updateTranscript', 
-          text: displayTranscript,
-          target: 'transcript'
+          text: newText,
+          isAppending: true // Signal that this should be appended to existing text
         })
       }
     })
   }
 
-  async setMode(mode: Mode) {
-    console.log('Setting mode to:', mode)
-    
-    // Clean up previous mode
-    if (this.currentMode === 'code' && this.isDictationActive) {
-      await this.stopDictation()
-    }
 
-    this.currentMode = mode
-    this.sendMessage({ type: 'updateMode', mode })
-  }
 
   public async toggleDictation() {
-    console.log(`toggleDictation called. Current state: isDictationActive=${this.isDictationActive}, mode=${this.currentMode}`)
+    console.log(`toggleDictation called. Current state: isDictationActive=${this.isDictationActive}`)
     if (this.isDictationActive) {
       await this.stopDictation()
     } else {
@@ -115,6 +92,7 @@ export class ModeManagerService {
     }
     try {
       this.isDictationActive = true
+      // Clear session arrays for new recording session
       this.finalTranscripts = []
       this.interimTranscript = ''
       console.log('Starting dictation in DeepgramService...')
@@ -122,16 +100,14 @@ export class ModeManagerService {
       console.log('Dictation started successfully')
       this.sendMessage({ 
         type: 'updateStatus', 
-        text: 'Recording...',
-        target: 'code-status'
+        text: 'Recording...'
       })
     } catch (error) {
       console.error('Failed to start dictation:', error)
       this.isDictationActive = false
       this.sendMessage({ 
         type: 'updateStatus', 
-        text: 'Error starting recording',
-        target: 'code-status'
+        text: 'Error starting recording'
       })
     }
   }
@@ -142,64 +118,18 @@ export class ModeManagerService {
     this.isDictationActive = false
     try {
       await this.deepgramService.stopDictation()
-      const haveAnyTranscript = this.finalTranscripts.length > 0 || this.interimTranscript.trim()
-      if (haveAnyTranscript) {
-        this.sendMessage({ 
-          type: 'updateStatus', 
-          text: 'Processing...',
-          target: 'code-status'
-        })
-        this.sendMessage({
-          type: 'updateTranscript',
-          text: '',
-          target: 'prompt-output'
-        })
-        const userText = this.finalTranscripts.join(' ') + ' ' + this.interimTranscript
-        const streamResponse = await this.llmService.streamProcessText({
-          text: this.finalTranscripts.join(' ') + ' ' + this.interimTranscript,
-          prompt: this.promptManager.getCurrentPrompt(),
-          onToken: (token: string) => {
-            this.sendMessage({
-              type: 'appendTranscript',
-              text: token,
-              target: 'prompt-output'
-            })
-          }
-        })
-        if (streamResponse.error) {
-          vscode.window.showErrorMessage(streamResponse.error)
-        } else {
-          await vscode.env.clipboard.writeText(streamResponse.text)
-          this.sendMessage({ type: 'showSuccess' })
-        }
-      }
+      // Don't auto-copy, let user decide when to copy
     } catch (error) {
       console.error('Failed to stop dictation:', error)
     } finally {
-      this.finalTranscripts = []
-      this.interimTranscript = ''
       this.sendMessage({ 
         type: 'updateStatus', 
-        text: 'Ready',
-        target: 'code-status'
+        text: 'Ready'
       })
     }
   }
 
-  private refreshPrompts() {
-    this.sendMessage({
-      type: 'populatePrompts',
-      prompts: [this.promptManager.getDefaultPrompt(), ...this.promptManager.getAllPrompts()]
-    })
-    this.sendMessage({
-      type: 'setCurrentPrompt',
-      id: this.promptManager.getCurrentPrompt().id
-    })
-  }
 
-  public refreshWebviewPrompts() {
-    this.refreshPrompts()
-  }
 
   // Set message handler for webview communication
   setMessageHandler(handler: (message: any) => void) {
@@ -218,26 +148,15 @@ export class ModeManagerService {
     console.log('ModeManagerService received message:', message)
     
     switch (message.type) {
-      case 'switchMode':
-        await this.setMode(message.mode as Mode)
-        break
-      
       case 'toggleDictation':
         await this.toggleDictation()
         break
       
-      case 'setPrompt':
-        await this.promptManager.setCurrentPrompt(message.id)
-        this.refreshPrompts()
-        break
-      
       case 'getApiKeyStatus':
         const hasDeepgramKey = !!(await this.context.secrets.get('openmetadataExplorer.deepgramApiKey'))
-        const hasOpenAIKey = !!(await this.context.secrets.get('openmetadataExplorer.openaiApiKey'))
         return { 
           type: 'apiKeyStatus', 
-          hasDeepgramKey,
-          hasOpenAIKey
+          hasDeepgramKey
         }
       
       case 'saveApiKey':
@@ -250,9 +169,6 @@ export class ModeManagerService {
           } catch (error) {
             console.error('Failed to update Deepgram API key:', error)
           }
-        } else if (message.service === 'openai') {
-          await this.context.secrets.store('openmetadataExplorer.openaiApiKey', message.key)
-          vscode.window.showInformationMessage('OpenAI API key saved')
         }
         break
       
@@ -260,9 +176,6 @@ export class ModeManagerService {
         if (message.service === 'deepgram') {
           await this.context.secrets.delete('openmetadataExplorer.deepgramApiKey')
           vscode.window.showInformationMessage('Deepgram API key cleared')
-        } else if (message.service === 'openai') {
-          await this.context.secrets.delete('openmetadataExplorer.openaiApiKey')
-          vscode.window.showInformationMessage('OpenAI API key cleared')
         }
         break
       
@@ -291,28 +204,14 @@ export class ModeManagerService {
             message: 'Microphone test failed: ' + (error as Error).message
           }
         }
-      
-      case 'getPromptsList':
-        const prompts = [
-          this.promptManager.getDefaultPrompt(),
-          ...this.promptManager.getAllPrompts()
-        ]
-        return {
-          type: 'promptsList',
-          prompts
-        }
-      
-      case 'getPromptPreview':
-        const prompt = message.id === 'default' 
-          ? this.promptManager.getDefaultPrompt() 
-          : this.promptManager.getPromptById(message.id)
-          
-        if (prompt) {
-          return {
-            type: 'promptPreview',
-            id: prompt.id,
-            prompt: prompt.prompt
-          }
+        break
+
+      case 'copyToClipboard':
+        try {
+          await vscode.env.clipboard.writeText(message.text)
+          this.sendMessage({ type: 'showSuccess' })
+        } catch (error) {
+          console.error('Failed to copy to clipboard:', error)
         }
         break
     }

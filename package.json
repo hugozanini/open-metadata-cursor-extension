@@ -73,11 +73,7 @@
           "description": "Deepgram API key for voice features",
           "default": ""
         },
-        "openmetadataExplorer.openaiApiKey": {
-          "type": "string",
-          "description": "OpenAI API key for text processing",
-          "default": ""
-        },
+
         "openmetadataExplorer.microphone.deviceMacOS": {
           "type": "string",
           "description": "Microphone device to use on macOS (leave empty for default)",

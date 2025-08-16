@@ -2170,6 +2170,81 @@
     background: var(--vscode-button-secondaryHoverBackground);
 }
 
+.microphone-test-section {
+    margin-top: 15px;
+}
+
+.mic-test-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.mic-test-result.success {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    color: var(--vscode-foreground);
+}
+
+.mic-test-result.error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    color: var(--vscode-foreground);
+}
+
+.result-icon {
+    font-size: 16px;
+}
+
+.result-message {
+    flex: 1;
+}
+
+.transcript-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.transcript-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.copy-button, .clear-button {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.copy-button:hover, .clear-button:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.copy-button:disabled, .clear-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.clear-button {
+    background: var(--vscode-errorForeground);
+    color: white;
+}
+
+.clear-button:hover:not(:disabled) {
+    background: rgba(var(--vscode-errorForeground), 0.8);
+}
+
 /* Mode Selector */
 .mode-selector {
     display: flex;
@@ -2305,6 +2380,26 @@
     font-family: var(--vscode-font-family);
     line-height: 1.5;
     white-space: pre-wrap;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.transcript-box.editable {
+    resize: vertical;
+    overflow-y: auto;
+    font-size: var(--vscode-font-size);
+}
+
+.transcript-box.editable:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+}
+
+.transcript-box.editable::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+    opacity: 0.7;
 }
 
 .transcript-box:empty::before,

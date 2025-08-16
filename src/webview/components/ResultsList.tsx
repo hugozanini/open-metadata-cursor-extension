@@ -70,7 +70,7 @@ export const ResultsList: React.FC<ResultsListProps> = ({
                         </div>
                         <div className="feature-item">
                             <span className="feature-icon">🎤</span>
-                            <span>Voice-powered coding assistance</span>
+                            <span>Voice-to-text transcription</span>
                         </div>
                     </div>
                     

@@ -9,9 +9,9 @@ const VibeCoderButton: React.FC<VibeCoderButtonProps> = ({ onActivate }) => {
         <button 
             className="vibe-coder-button"
             onClick={onActivate}
-            title="Open Voice Coding Assistant"
+            title="Open Voice to Text"
         >
-            🎤 Voice Coding
+            🎤 Voice to Text
         </button>
     );
 };
