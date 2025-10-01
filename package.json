@@ -2,7 +2,7 @@
   "name": "openmetadata-ai-explorer",
   "displayName": "OpenMetadata AI Explorer",
   "description": "AI-powered data discovery and lineage visualization for OpenMetadata",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "openmetadata",
   "author": {
     "name": "Hugo Zanini",
