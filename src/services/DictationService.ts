@@ -98,7 +98,7 @@ export class DictationService {
         
         // Process audio in chunks (every 3 seconds worth of data)
         // At 16kHz, 3 seconds = 48,000 samples
-        if (totalSamples >= 16000) {
+        if (totalSamples >= 48000) {
           console.log('Processing audio chunks - threshold reached')
           this.processAudioChunks()
         }
@@ -159,17 +159,11 @@ export class DictationService {
       offset += chunk.length
     }
 
-    // Limit to max 15 seconds and ensure a minimum pad so very short clips still decode
-    const maxSamples = 15 * 16000
-    const minSamples = 8000 // 0.5s
-    let audioToProcess = combinedAudio.length > maxSamples 
+    // Limit to max 30 seconds (480,000 samples at 16kHz)
+    const maxSamples = 30 * 16000
+    const audioToProcess = combinedAudio.length > maxSamples 
       ? combinedAudio.slice(-maxSamples) 
       : combinedAudio
-    if (audioToProcess.length < minSamples) {
-      const padded = new Float32Array(minSamples)
-      padded.set(audioToProcess)
-      audioToProcess = padded
-    }
 
     console.log('Processing audio chunk:', audioToProcess.length, 'samples')
     

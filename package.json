@@ -140,7 +140,6 @@
   "dependencies": {
     "@deepgram/sdk": "^3.0.0",
     "@huggingface/transformers": "^3.7.1",
-    "@xenova/transformers": "^2.16.1",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
     "onnxruntime-web": "^1.18.0",

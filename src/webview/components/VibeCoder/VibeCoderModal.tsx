@@ -23,7 +23,6 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
     const [progressItems, setProgressItems] = useState<any[]>([]);
     const [whisperWorker, setWhisperWorker] = useState<Worker | null>(null);
     const [workerBlobUrl, setWorkerBlobUrl] = useState<string | null>(null);
-    const [dictationConfig, setDictationConfig] = useState<any>(null);
     const [cursorPosition, setCursorPosition] = useState(0);
     const [sessionStartPosition, setSessionStartPosition] = useState(0); // Where current session started
     const [currentSessionText, setCurrentSessionText] = useState(''); // Track current recording session
@@ -38,7 +37,6 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
         // Request initial data when modal opens
         vscode.postMessage({ type: 'getApiKeyStatus' });
         vscode.postMessage({ type: 'getModelStatus' });
-        vscode.postMessage({ type: 'getDictationConfig' });
     }, [isOpen, vscode]);
 
     // Separate effect for worker recreation logic
@@ -146,9 +144,6 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                     break;
                 case 'modelReady':
                     setIsModelLoaded(true);
-                case 'dictationConfig':
-                    setDictationConfig(message.config);
-                    break;
                     setIsModelLoading(false);
                     setProgressItems([]);
                     setHasDeepgramKey(true); // For compatibility with existing UI logic
@@ -373,22 +368,8 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                 setIsModelLoading(false);
             };
             
-            // Start loading model with optional VAD URL and thresholds; also pass ASR params
-            const cfg = dictationConfig || {};
-            worker.postMessage({ 
-                type: 'load', 
-                data: { 
-                    vadModelUrl: (window as any).vadModelUri, 
-                    vadThreshold: cfg.vadThreshold ?? 0.6,
-                    vadMinSpeechMs: cfg.vadMinSpeechMs ?? 200,
-                    asrModelId: cfg.modelId,
-                    asrTemperature: cfg.temperature,
-                    asrNumBeams: cfg.numBeams,
-                    asrChunkS: cfg.chunkSeconds,
-                    asrStrideS: cfg.strideSeconds,
-                    asrLanguage: cfg.languageHint
-                } 
-            });
+            // Start loading model with optional VAD URL
+            worker.postMessage({ type: 'load', data: { vadModelUrl: (window as any).vadModelUri, vadThreshold: 0.7 } });
             
         } catch (error) {
             console.error('Failed to create worker:', error);

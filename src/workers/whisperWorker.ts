@@ -6,8 +6,6 @@ import {
     env,
     full,
 } from "@huggingface/transformers";
-import { pipeline as xenovaPipeline, env as xenovaEnv } from '@xenova/transformers';
-import { pipeline as xenovaPipeline, env as xenovaEnv } from '@xenova/transformers';
 // VAD
 // onnxruntime-web is optional; worker will fall back to energy-based VAD if unavailable
 let ort: any = null;
@@ -20,12 +18,8 @@ try {
 }
 
 // Configure environment for local WASM files
-xenovaEnv.allowRemoteModels = true;
-xenovaEnv.allowLocalModels = true;
 env.allowRemoteModels = true;
 env.allowLocalModels = true;
-xenovaEnv.allowRemoteModels = true;
-xenovaEnv.allowLocalModels = true;
 
 const MAX_NEW_TOKENS = 64;
 
@@ -170,28 +164,6 @@ class AutomaticSpeechRecognitionPipeline {
 let processing = false;
 
 // -----------------------------
-// Xenova ASR pipeline (whisper-small.en)
-// -----------------------------
-let asrPipeline: any = null;
-async function getASRPipeline() {
-  if (!asrPipeline) {
-    asrPipeline = await xenovaPipeline('automatic-speech-recognition', 'Xenova/whisper-small.en');
-  }
-  return asrPipeline;
-}
-
-// -----------------------------
-// Xenova ASR pipeline (whisper-small.en)
-// -----------------------------
-let asrPipeline: any = null;
-async function getASRPipeline() {
-  if (!asrPipeline) {
-    asrPipeline = await xenovaPipeline('automatic-speech-recognition', 'Xenova/whisper-small.en');
-  }
-  return asrPipeline;
-}
-
-// -----------------------------
 // VAD (Silero) integration
 // -----------------------------
 let vadSession: any = null;
@@ -271,7 +243,7 @@ async function extractSpeechSegments(
 }
 
 async function transcribeInternal({ audio, language }: { audio: Float32Array; language: string }): Promise<string> {
-  if (processing) return '';
+  if (processing) return;
   processing = true;
 
   // Tell the main thread we are starting
@@ -280,16 +252,57 @@ async function transcribeInternal({ audio, language }: { audio: Float32Array; la
   try {
     // Pre-process audio (normalize + high-pass)
     const preprocessed = preprocessAudio(audio);
-    // Use Xenova ASR pipeline
-    const pipeline = await getASRPipeline();
-    const result = await pipeline(preprocessed, {
-      // No parameter changes per request
+
+    // Retrieve the text-generation pipeline.
+    const [tokenizer, processor, model] =
+      await AutomaticSpeechRecognitionPipeline.getInstance();
+
+    let startTime: number;
+    let numTokens = 0;
+    let tps: number;
+    const token_callback_function = () => {
+      startTime ??= performance.now();
+
+      if (numTokens++ > 0) {
+        tps = (numTokens / (performance.now() - startTime)) * 1000;
+      }
+    };
+    const callback_function = (output: any) => {
+      self.postMessage({
+        status: "update",
+        output,
+        tps,
+        numTokens,
+      });
+    };
+
+    const streamer = new TextStreamer(tokenizer, {
+      skip_prompt: true,
+      skip_special_tokens: true,
+      callback_function,
+      token_callback_function,
     });
-    const rawText = typeof result === 'string' ? result : (result?.text || '');
-    const cleaned = cleanText(rawText);
-    return cleaned || rawText;
+
+    const inputs = await processor(preprocessed);
+
+    const outputs = await model.generate({
+      ...inputs,
+      max_new_tokens: MAX_NEW_TOKENS,
+      language,
+      streamer,
+    });
+
+    const decoded = tokenizer.batch_decode(outputs, {
+      skip_special_tokens: true,
+    });
+
+    // Clean the decoded text to suppress artifacts
+    const rawText = decoded[0] || decoded;
+    const cleaned = typeof rawText === 'string' ? cleanText(rawText) : '';
+
+    return cleaned || (typeof rawText === 'string' ? rawText : '');
   } catch (error) {
-    console.error('ASR pipeline error:', error);
+    console.error('Whisper generation error:', error);
     self.postMessage({ status: "error", error: error instanceof Error ? error.message : 'Unknown error occurred' });
     return '';
   } finally {
@@ -308,9 +321,45 @@ async function load() {
     // Initialize VAD if model URI was provided by main thread via global
     const vadUrl = (self as any).vadModelUrl || (typeof window !== 'undefined' ? (window as any).vadModelUri : undefined);
     await initVAD(vadUrl);
-    // Initialize Xenova ASR pipeline
-    await getASRPipeline();
-    console.log('Worker: ASR pipeline ready!');
+    console.log('Worker: Requesting model instance...');
+    // Load the pipeline and save it for future use.
+    let tokenizer, processor, model;
+    
+    try {
+      [tokenizer, processor, model] = await AutomaticSpeechRecognitionPipeline.getInstance((progress) => {
+        // We also add a progress callback to the pipeline so that we can
+        // track model loading.
+        console.log('Worker: Progress update:', progress);
+        self.postMessage(progress);
+      });
+      console.log('Worker: getInstance completed successfully');
+    } catch (instanceError) {
+      console.error('Worker: getInstance failed:', instanceError);
+      throw instanceError;
+    }
+
+    console.log('Worker: Model components loaded, starting warm-up...');
+    self.postMessage({
+      status: "loading",
+      data: "Compiling shaders and warming up model...",
+    });
+
+    // Run model with dummy input to compile shaders
+    console.log('Worker: Running warm-up inference...');
+    try {
+      const dummyInput = full([1, 80, 3000], 0.0);
+      console.log('Worker: Created dummy input, calling model.generate...');
+      await model.generate({
+        input_features: dummyInput,
+        max_new_tokens: 1,
+      });
+      console.log('Worker: Warm-up completed successfully');
+    } catch (warmupError) {
+      console.warn('Worker: Warm-up failed, but model should still work:', warmupError);
+      // Continue anyway - warm-up failure doesn't mean the model won't work
+    }
+    
+    console.log('Worker: Model is ready!');
     self.postMessage({ status: "ready" });
   } catch (error) {
     console.error('Whisper model loading error:', error);

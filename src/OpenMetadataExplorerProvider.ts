@@ -82,9 +82,6 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
-                case 'getDictationConfig':
-                    await this.sendDictationConfig();
-                    break;
                 case 'search':
                     await this.handleSearch(data.query);
                     break;
@@ -296,24 +293,6 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 openmetadataUrl: config.get<string>('openmetadataUrl'),
                 hasGeminiKey: !!config.get<string>('geminiApiKey'),
                 hasAuthToken: !!config.get<string>('openmetadataAuthToken')
-            }
-        });
-    }
-
-    private async sendDictationConfig() {
-        if (!this._view) return;
-        const cfg = vscode.workspace.getConfiguration('openmetadataExplorer');
-        this._view.webview.postMessage({
-            type: 'dictationConfig',
-            config: {
-                modelId: cfg.get<string>('asr.modelId') || 'Xenova/whisper-small.en',
-                temperature: cfg.get<number>('asr.temperature') ?? 0,
-                numBeams: cfg.get<number>('asr.numBeams') ?? 5,
-                chunkSeconds: cfg.get<number>('asr.chunkSeconds') ?? 30,
-                strideSeconds: cfg.get<number>('asr.strideSeconds') ?? 5,
-                languageHint: cfg.get<string>('asr.languageHint') || 'en',
-                vadThreshold: cfg.get<number>('vad.threshold') ?? 0.65,
-                vadMinSpeechMs: cfg.get<number>('vad.minSpeechMs') ?? 250,
             }
         });
     }
