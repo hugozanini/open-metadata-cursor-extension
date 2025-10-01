@@ -374,15 +374,21 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
             };
             
             // Start loading model with optional VAD URL and thresholds; also pass ASR params
-            const vt = dictationConfig?.vadThreshold ?? 0.7;
             const cfg = dictationConfig || {};
-            (worker as any).asrModelId = cfg.modelId;
-            (worker as any).asrTemperature = cfg.temperature;
-            (worker as any).asrNumBeams = cfg.numBeams;
-            (worker as any).asrChunkS = cfg.chunkSeconds;
-            (worker as any).asrStrideS = cfg.strideSeconds;
-            (worker as any).asrLanguage = cfg.languageHint;
-            worker.postMessage({ type: 'load', data: { vadModelUrl: (window as any).vadModelUri, vadThreshold: vt } });
+            worker.postMessage({ 
+                type: 'load', 
+                data: { 
+                    vadModelUrl: (window as any).vadModelUri, 
+                    vadThreshold: cfg.vadThreshold ?? 0.6,
+                    vadMinSpeechMs: cfg.vadMinSpeechMs ?? 200,
+                    asrModelId: cfg.modelId,
+                    asrTemperature: cfg.temperature,
+                    asrNumBeams: cfg.numBeams,
+                    asrChunkS: cfg.chunkSeconds,
+                    asrStrideS: cfg.strideSeconds,
+                    asrLanguage: cfg.languageHint
+                } 
+            });
             
         } catch (error) {
             console.error('Failed to create worker:', error);

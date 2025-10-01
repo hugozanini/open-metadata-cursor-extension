@@ -170,7 +170,8 @@ let processing = false;
 // -----------------------------
 let vadSession: any = null;
 let vadInitialized = false;
-let vadThreshold = 0.65; // stricter default; can be tuned via message later
+let vadThreshold = 0.6; // slightly relaxed to avoid over-filtering
+let vadMinSpeechMs = 200;
 
 async function initVAD(modelUrl?: string) {
   if (!ort || vadInitialized) return;
@@ -202,7 +203,7 @@ async function vadFrameHasSpeech(frameFloat32: Float32Array): Promise<boolean> {
   let sum = 0;
   for (let i = 0; i < frameFloat32.length; i++) sum += frameFloat32[i] * frameFloat32[i];
   const rms = Math.sqrt(sum / Math.max(1, frameFloat32.length));
-  return rms > 0.02; // tuneable, stricter
+  return rms > 0.015; // relax slightly
 }
 
 async function extractSpeechSegments(
@@ -385,9 +386,16 @@ self.addEventListener("message", async (e) => {
 
   switch (type) {
     case "load":
-      // Allow passing VAD model URL and threshold via message
+      // Allow passing VAD/ASR config via message
       if (data?.vadModelUrl) (self as any).vadModelUrl = data.vadModelUrl;
       if (typeof data?.vadThreshold === 'number') vadThreshold = data.vadThreshold;
+      if (typeof data?.vadMinSpeechMs === 'number') vadMinSpeechMs = data.vadMinSpeechMs;
+      if (data?.asrModelId) (self as any).asrModelId = data.asrModelId;
+      if (typeof data?.asrTemperature === 'number') (self as any).asrTemperature = data.asrTemperature;
+      if (typeof data?.asrNumBeams === 'number') (self as any).asrNumBeams = data.asrNumBeams;
+      if (typeof data?.asrChunkS === 'number') (self as any).asrChunkS = data.asrChunkS;
+      if (typeof data?.asrStrideS === 'number') (self as any).asrStrideS = data.asrStrideS;
+      if (data?.asrLanguage) (self as any).asrLanguage = data.asrLanguage;
       await load();
       break;
 
@@ -395,9 +403,16 @@ self.addEventListener("message", async (e) => {
       // Preprocess + VAD segmentation, then transcribe segments and emit single combined result
       try {
         const pre = preprocessAudio(data.audio as Float32Array);
-        const segs = await extractSpeechSegments(pre, 30, 16000, 250);
+        const segs = await extractSpeechSegments(pre, 30, 16000, vadMinSpeechMs);
         if (!segs.length) {
-          self.postMessage({ status: 'update', output: '' });
+          // If VAD found nothing, fallback to transcribing the full preprocessed chunk
+          const txt = await transcribeInternal({ audio: pre, language: data.language });
+          const cleaned = cleanText(txt);
+          if (cleaned) {
+            self.postMessage({ status: 'complete', output: cleaned });
+          } else {
+            self.postMessage({ status: 'update', output: '' });
+          }
           break;
         }
         const parts: string[] = [];
