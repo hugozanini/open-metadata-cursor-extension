@@ -159,11 +159,17 @@ export class DictationService {
       offset += chunk.length
     }
 
-    // Limit to max 30 seconds (480,000 samples at 16kHz)
+    // Limit to max 15 seconds and ensure a minimum pad so very short clips still decode
     const maxSamples = 15 * 16000
-    const audioToProcess = combinedAudio.length > maxSamples 
+    const minSamples = 8000 // 0.5s
+    let audioToProcess = combinedAudio.length > maxSamples 
       ? combinedAudio.slice(-maxSamples) 
       : combinedAudio
+    if (audioToProcess.length < minSamples) {
+      const padded = new Float32Array(minSamples)
+      padded.set(audioToProcess)
+      audioToProcess = padded
+    }
 
     console.log('Processing audio chunk:', audioToProcess.length, 'samples')
     

@@ -444,7 +444,10 @@ self.addEventListener("message", async (e) => {
         if (combined) {
           self.postMessage({ status: 'complete', output: combined });
         } else {
-          self.postMessage({ status: 'update', output: '' });
+          // As a final fallback, transcribe the full preprocessed chunk
+          const txt = await transcribeInternal({ audio: pre, language: data.language });
+          const cleaned = cleanText(txt);
+          self.postMessage({ status: cleaned ? 'complete' : 'update', output: cleaned || '' });
         }
       } catch (err) {
         self.postMessage({ status: 'error', error: err instanceof Error ? err.message : 'VAD/transcription error' });
