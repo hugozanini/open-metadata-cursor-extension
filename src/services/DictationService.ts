@@ -96,9 +96,9 @@ export class DictationService {
         const totalSamples = this.audioChunks.reduce((sum, chunk) => sum + chunk.length, 0)
         console.log('Audio chunks collected:', this.audioChunks.length, 'chunks, total samples:', totalSamples)
         
-        // Process audio in chunks (every 2 seconds worth of data)
-        // At 16kHz, 2 seconds = 32,000 samples
-        if (totalSamples >= 32000) {
+        // Process audio in chunks (every 3 seconds worth of data)
+        // At 16kHz, 3 seconds = 48,000 samples
+        if (totalSamples >= 48000) {
           console.log('Processing audio chunks - threshold reached')
           this.processAudioChunks()
         }

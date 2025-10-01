@@ -13,6 +13,58 @@ env.allowLocalModels = true;
 
 const MAX_NEW_TOKENS = 64;
 
+// -----------------------------
+// Audio preprocessing utilities
+// -----------------------------
+
+function peakNormalizeMono(data: Float32Array): Float32Array {
+  let max = 1e-6;
+  for (let i = 0; i < data.length; i++) {
+    const v = Math.abs(data[i]);
+    if (v > max) max = v;
+  }
+  if (max === 0) return data;
+  const out = new Float32Array(data.length);
+  const inv = 1 / max;
+  for (let i = 0; i < data.length; i++) out[i] = data[i] * inv;
+  return out;
+}
+
+// One-pole high-pass filter to reduce low-frequency rumble
+function highPassFilterMono(data: Float32Array, alpha: number = 0.97): Float32Array {
+  if (data.length === 0) return data;
+  const out = new Float32Array(data.length);
+  out[0] = data[0];
+  for (let i = 1; i < data.length; i++) {
+    out[i] = alpha * (out[i - 1] + data[i] - data[i - 1]);
+  }
+  return out;
+}
+
+function preprocessAudio(input: Float32Array): Float32Array {
+  // Peak normalize to [-1, 1] and apply light high-pass
+  const normalized = peakNormalizeMono(input);
+  return highPassFilterMono(normalized, 0.97);
+}
+
+// -----------------------------
+// Text post-processing utilities
+// -----------------------------
+
+function cleanText(text: string): string {
+  if (!text) return '';
+  let out = text;
+  // Remove bracketed artifacts
+  out = out.replace(/\[(?:BLANK_AUDIO|NOISE|MUSIC|INAUDIBLE|APPLAUSE|COUGH|SILENCE)\]/gi, ' ');
+  // Remove any other bracketed tokens conservatively
+  out = out.replace(/\[[^\]]+\]/g, ' ');
+  // Remove parenthetical stage directions with common noise words
+  out = out.replace(/\((?:audience|people|crowd|chatter|chattering|noise|music|inaudible|applause|cough|silence)[^)]*\)/gi, ' ');
+  // Collapse whitespace
+  out = out.replace(/\s+/g, ' ').trim();
+  return out;
+}
+
 /**
  * This class uses the Singleton pattern to ensure that only one instance of the model is loaded.
  * Adapted from realtime-whisper-webgpu for VS Code extension use
@@ -111,6 +163,9 @@ async function generate({ audio, language }: { audio: Float32Array; language: st
   self.postMessage({ status: "start" });
 
   try {
+    // Pre-process audio (normalize + high-pass)
+    const preprocessed = preprocessAudio(audio);
+
     // Retrieve the text-generation pipeline.
     const [tokenizer, processor, model] =
       await AutomaticSpeechRecognitionPipeline.getInstance();
@@ -141,7 +196,7 @@ async function generate({ audio, language }: { audio: Float32Array; language: st
       token_callback_function,
     });
 
-    const inputs = await processor(audio);
+    const inputs = await processor(preprocessed);
 
     const outputs = await model.generate({
       ...inputs,
@@ -154,10 +209,14 @@ async function generate({ audio, language }: { audio: Float32Array; language: st
       skip_special_tokens: true,
     });
 
+    // Clean the decoded text to suppress artifacts
+    const rawText = decoded[0] || decoded;
+    const cleaned = typeof rawText === 'string' ? cleanText(rawText) : '';
+
     // Send the output back to the main thread
     self.postMessage({
       status: "complete",
-      output: decoded[0] || decoded, // Handle both array and string responses
+      output: cleaned || rawText, // Prefer cleaned text
     });
   } catch (error) {
     console.error('Whisper generation error:', error);
