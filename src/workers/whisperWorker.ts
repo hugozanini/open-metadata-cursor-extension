@@ -6,6 +6,16 @@ import {
     env,
     full,
 } from "@huggingface/transformers";
+// VAD
+// onnxruntime-web is optional; worker will fall back to energy-based VAD if unavailable
+let ort: any = null;
+try {
+  // Dynamically require inside worker bundle if present
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ort = require('onnxruntime-web');
+} catch (_) {
+  ort = null;
+}
 
 // Configure environment for local WASM files
 env.allowRemoteModels = true;
@@ -155,6 +165,85 @@ class AutomaticSpeechRecognitionPipeline {
 
 let processing = false;
 
+// -----------------------------
+// VAD (Silero) integration
+// -----------------------------
+let vadSession: any = null;
+let vadInitialized = false;
+let vadThreshold = 0.5; // default; can be tuned via message later
+
+async function initVAD(modelUrl?: string) {
+  if (!ort || vadInitialized) return;
+  if (!modelUrl) return;
+  try {
+    vadSession = await ort.InferenceSession.create(modelUrl, { executionProviders: ['wasm'] });
+    vadInitialized = true;
+    self.postMessage({ status: 'loading', data: 'VAD model loaded' });
+  } catch (e) {
+    // Fall back silently; we will use energy-based VAD
+    vadSession = null;
+    vadInitialized = false;
+    self.postMessage({ status: 'loading', data: 'VAD unavailable, using energy-based fallback' });
+  }
+}
+
+async function vadFrameHasSpeech(frameFloat32: Float32Array): Promise<boolean> {
+  if (vadSession) {
+    try {
+      const input = new ort.Tensor('float32', frameFloat32, [1, frameFloat32.length]);
+      const result = await vadSession.run({ input });
+      const out = (result.output?.data?.[0] ?? 0) as number;
+      return out > vadThreshold;
+    } catch (_) {
+      // fallthrough to energy-based
+    }
+  }
+  // Energy-based fallback: simple RMS threshold
+  let sum = 0;
+  for (let i = 0; i < frameFloat32.length; i++) sum += frameFloat32[i] * frameFloat32[i];
+  const rms = Math.sqrt(sum / Math.max(1, frameFloat32.length));
+  return rms > 0.01; // tuneable
+}
+
+async function extractSpeechSegments(
+  chunk: Float32Array,
+  frameMs = 30,
+  sampleRate = 16000,
+  minSpeechMs = 150,
+): Promise<Array<{ audio: Float32Array; timestamp: { start: number; end: number } }>> {
+  const frameLen = Math.floor(sampleRate * (frameMs / 1000));
+  const speechMask: boolean[] = [];
+  for (let i = 0; i < chunk.length; i += frameLen) {
+    const frame = chunk.subarray(i, Math.min(i + frameLen, chunk.length));
+    const framed = frame.length === frameLen ? frame : (() => {
+      const f = new Float32Array(frameLen);
+      f.set(frame);
+      return f;
+    })();
+    // eslint-disable-next-line no-await-in-loop
+    const hasSpeech = await vadFrameHasSpeech(framed);
+    speechMask.push(hasSpeech);
+  }
+  // Merge contiguous speech frames
+  const segments: Array<{ start: number; end: number }> = [];
+  let start: number | null = null;
+  for (let i = 0; i < speechMask.length; i++) {
+    if (speechMask[i] && start === null) start = i * frameLen;
+    const isLast = i === speechMask.length - 1;
+    if ((!speechMask[i] || isLast) && start !== null) {
+      const end = (speechMask[i] && isLast ? i + 1 : i) * frameLen;
+      if ((end - start) >= Math.floor(sampleRate * (minSpeechMs / 1000))) {
+        segments.push({ start, end });
+      }
+      start = null;
+    }
+  }
+  return segments.map(s => ({
+    audio: chunk.subarray(s.start, Math.min(s.end, chunk.length)),
+    timestamp: { start: s.start / sampleRate, end: Math.min(s.end, chunk.length) / sampleRate },
+  }));
+}
+
 async function generate({ audio, language }: { audio: Float32Array; language: string }) {
   if (processing) return;
   processing = true;
@@ -237,6 +326,9 @@ async function load() {
   });
 
   try {
+    // Initialize VAD if model URI was provided by main thread via global
+    const vadUrl = (self as any).vadModelUrl || (typeof window !== 'undefined' ? (window as any).vadModelUri : undefined);
+    await initVAD(vadUrl);
     console.log('Worker: Requesting model instance...');
     // Load the pipeline and save it for future use.
     let tokenizer, processor, model;
@@ -305,11 +397,32 @@ self.addEventListener("message", async (e) => {
 
   switch (type) {
     case "load":
+      // Allow passing VAD model URL and threshold via message
+      if (data?.vadModelUrl) (self as any).vadModelUrl = data.vadModelUrl;
+      if (typeof data?.vadThreshold === 'number') vadThreshold = data.vadThreshold;
       await load();
       break;
 
     case "generate":
-      await generate(data);
+      // Preprocess + VAD segmentation, then transcribe segments and merge
+      try {
+        const pre = preprocessAudio(data.audio as Float32Array);
+        const segs = await extractSpeechSegments(pre, 30, 16000, 150);
+        if (!segs.length) {
+          // No speech; do not emit text
+          self.postMessage({ status: 'update', output: '' });
+          break;
+        }
+        let mergedText = '';
+        for (const s of segs) {
+          // eslint-disable-next-line no-await-in-loop
+          await generate({ audio: s.audio, language: data.language });
+          // The generate() will post 'complete' with cleaned text; we can't easily intercept here without refactor.
+          // As a simple approach, rely on multiple 'complete' messages per chunk.
+        }
+      } catch (err) {
+        self.postMessage({ status: 'error', error: err instanceof Error ? err.message : 'VAD/transcription error' });
+      }
       break;
 
     default:

@@ -316,6 +316,10 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
             vscode.Uri.joinPath(this._extensionUri, 'dist', 'whisperWorker.js')
         );
 
+        const vadModelUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, 'assets', 'models', 'silero_vad.onnx')
+        );
+
         console.log('🔗 Webview script URI:', scriptUri.toString());
         console.log('🖼️ Logo URI:', logoUri.toString());
 
@@ -359,6 +363,7 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                 // Make URIs available globally
                 window.extensionLogoUri = '${logoUri}';
                 window.whisperWorkerUri = '${workerUri}';
+                window.vadModelUri = '${vadModelUri}';
                 
                 // Show loading message
                 setTimeout(() => {
