@@ -23,6 +23,7 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
     const [progressItems, setProgressItems] = useState<any[]>([]);
     const [whisperWorker, setWhisperWorker] = useState<Worker | null>(null);
     const [workerBlobUrl, setWorkerBlobUrl] = useState<string | null>(null);
+    const [dictationConfig, setDictationConfig] = useState<any>(null);
     const [cursorPosition, setCursorPosition] = useState(0);
     const [sessionStartPosition, setSessionStartPosition] = useState(0); // Where current session started
     const [currentSessionText, setCurrentSessionText] = useState(''); // Track current recording session
@@ -37,6 +38,7 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
         // Request initial data when modal opens
         vscode.postMessage({ type: 'getApiKeyStatus' });
         vscode.postMessage({ type: 'getModelStatus' });
+        vscode.postMessage({ type: 'getDictationConfig' });
     }, [isOpen, vscode]);
 
     // Separate effect for worker recreation logic
@@ -144,6 +146,9 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                     break;
                 case 'modelReady':
                     setIsModelLoaded(true);
+                case 'dictationConfig':
+                    setDictationConfig(message.config);
+                    break;
                     setIsModelLoading(false);
                     setProgressItems([]);
                     setHasDeepgramKey(true); // For compatibility with existing UI logic
@@ -368,8 +373,16 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
                 setIsModelLoading(false);
             };
             
-            // Start loading model with optional VAD URL
-            worker.postMessage({ type: 'load', data: { vadModelUrl: (window as any).vadModelUri, vadThreshold: 0.7 } });
+            // Start loading model with optional VAD URL and thresholds; also pass ASR params
+            const vt = dictationConfig?.vadThreshold ?? 0.7;
+            const cfg = dictationConfig || {};
+            (worker as any).asrModelId = cfg.modelId;
+            (worker as any).asrTemperature = cfg.temperature;
+            (worker as any).asrNumBeams = cfg.numBeams;
+            (worker as any).asrChunkS = cfg.chunkSeconds;
+            (worker as any).asrStrideS = cfg.strideSeconds;
+            (worker as any).asrLanguage = cfg.languageHint;
+            worker.postMessage({ type: 'load', data: { vadModelUrl: (window as any).vadModelUri, vadThreshold: vt } });
             
         } catch (error) {
             console.error('Failed to create worker:', error);

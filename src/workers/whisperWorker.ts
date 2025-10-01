@@ -6,6 +6,7 @@ import {
     env,
     full,
 } from "@huggingface/transformers";
+import { pipeline } from '@xenova/transformers';
 // VAD
 // onnxruntime-web is optional; worker will fall back to energy-based VAD if unavailable
 let ort: any = null;
@@ -82,6 +83,7 @@ class AutomaticSpeechRecognitionPipeline {
   static tokenizer: any = null;
   static processor: any = null;
   static model: any = null;
+  static xenovaAsr: any = null;
 
   static async getInstance(progress_callback: ((progress: any) => void) | null = null) {
     console.log('Worker: getInstance called, loading tokenizer and processor...');
@@ -253,54 +255,48 @@ async function transcribeInternal({ audio, language }: { audio: Float32Array; la
     // Pre-process audio (normalize + high-pass)
     const preprocessed = preprocessAudio(audio);
 
-    // Retrieve the text-generation pipeline.
-    const [tokenizer, processor, model] =
-      await AutomaticSpeechRecognitionPipeline.getInstance();
-
-    let startTime: number;
-    let numTokens = 0;
-    let tps: number;
-    const token_callback_function = () => {
-      startTime ??= performance.now();
-
-      if (numTokens++ > 0) {
-        tps = (numTokens / (performance.now() - startTime)) * 1000;
+    // Prefer Xenova pipeline if available
+    if (!AutomaticSpeechRecognitionPipeline.xenovaAsr) {
+      try {
+        AutomaticSpeechRecognitionPipeline.xenovaAsr = await (pipeline as any)(
+          'automatic-speech-recognition',
+          (self as any).asrModelId || 'Xenova/whisper-small.en',
+          { device: 'webgpu' }
+        );
+      } catch (_) {
+        // fallback below
       }
-    };
-    const callback_function = (output: any) => {
-      self.postMessage({
-        status: "update",
-        output,
-        tps,
-        numTokens,
+    }
+
+    if (AutomaticSpeechRecognitionPipeline.xenovaAsr) {
+      const asr: any = AutomaticSpeechRecognitionPipeline.xenovaAsr;
+      const res = await asr(preprocessed, {
+        chunk_length_s: (self as any).asrChunkS || 30,
+        stride_length_s: (self as any).asrStrideS || 5,
+        return_timestamps: false,
+        language: language || (self as any).asrLanguage || 'en',
+        temperature: (self as any).asrTemperature ?? 0,
+        num_beams: (self as any).asrNumBeams ?? 5,
+        suppress_blank: true,
+        suppress_non_speech_tokens: true,
       });
-    };
-
-    const streamer = new TextStreamer(tokenizer, {
-      skip_prompt: true,
-      skip_special_tokens: true,
-      callback_function,
-      token_callback_function,
-    });
-
-    const inputs = await processor(preprocessed);
-
-    const outputs = await model.generate({
-      ...inputs,
-      max_new_tokens: MAX_NEW_TOKENS,
-      language,
-      streamer,
-    });
-
-    const decoded = tokenizer.batch_decode(outputs, {
-      skip_special_tokens: true,
-    });
-
-    // Clean the decoded text to suppress artifacts
-    const rawText = decoded[0] || decoded;
-    const cleaned = typeof rawText === 'string' ? cleanText(rawText) : '';
-
-    return cleaned || (typeof rawText === 'string' ? rawText : '');
+      const text = typeof res?.text === 'string' ? res.text : '';
+      return cleanText(text);
+    } else {
+      // Fallback to ONNX path
+      const [tokenizer, processor, model] =
+        await AutomaticSpeechRecognitionPipeline.getInstance();
+      const inputs = await processor(preprocessed);
+      const outputs = await model.generate({
+        ...inputs,
+        max_new_tokens: MAX_NEW_TOKENS,
+        language,
+      });
+      const decoded = tokenizer.batch_decode(outputs, { skip_special_tokens: true });
+      const rawText = decoded[0] || decoded;
+      const cleaned = typeof rawText === 'string' ? cleanText(rawText) : '';
+      return cleaned || (typeof rawText === 'string' ? rawText : '');
+    }
   } catch (error) {
     console.error('Whisper generation error:', error);
     self.postMessage({ status: "error", error: error instanceof Error ? error.message : 'Unknown error occurred' });

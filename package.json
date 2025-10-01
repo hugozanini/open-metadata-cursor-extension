@@ -87,6 +87,46 @@
           "type": "string",
           "description": "Microphone device to use on Linux (leave empty for default)",
           "default": ""
+        },
+        "openmetadataExplorer.asr.modelId": {
+          "type": "string",
+          "description": "ASR model id (e.g., Xenova/whisper-small.en, onnx-community/whisper-base)",
+          "default": "Xenova/whisper-small.en"
+        },
+        "openmetadataExplorer.asr.temperature": {
+          "type": "number",
+          "description": "Decoding temperature (0.0 for deterministic)",
+          "default": 0
+        },
+        "openmetadataExplorer.asr.numBeams": {
+          "type": "number",
+          "description": "Beam search width",
+          "default": 5
+        },
+        "openmetadataExplorer.asr.chunkSeconds": {
+          "type": "number",
+          "description": "Chunk length in seconds for ASR",
+          "default": 30
+        },
+        "openmetadataExplorer.asr.strideSeconds": {
+          "type": "number",
+          "description": "Stride length in seconds for ASR",
+          "default": 5
+        },
+        "openmetadataExplorer.asr.languageHint": {
+          "type": "string",
+          "description": "Language hint (e.g., en)",
+          "default": "en"
+        },
+        "openmetadataExplorer.vad.threshold": {
+          "type": "number",
+          "description": "VAD probability threshold (0-1)",
+          "default": 0.65
+        },
+        "openmetadataExplorer.vad.minSpeechMs": {
+          "type": "number",
+          "description": "Minimum speech duration (ms) to keep",
+          "default": 250
         }
       }
     },
@@ -140,6 +180,7 @@
   "dependencies": {
     "@deepgram/sdk": "^3.0.0",
     "@huggingface/transformers": "^3.7.1",
+    "@xenova/transformers": "^2.6.0",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
     "onnxruntime-web": "^1.18.0",
