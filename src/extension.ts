@@ -23,6 +23,13 @@ export function activate(context: vscode.ExtensionContext) {
             })
         );
 
+        // Register command to open Vibe Coder (Voice to Text) modal
+        context.subscriptions.push(
+            vscode.commands.registerCommand('openmetadataExplorer.openVibeCoder', async () => {
+                await provider.openVibeCoder();
+            })
+        );
+
         console.log('✅ OpenMetadata AI Explorer activated successfully!');
         
         // Show welcome message

@@ -95,7 +95,10 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     await this.handleExpandLineage(data.tableFqn, data.nodeId, data.direction, data.entityType);
                     break;
                 case 'openVibeCoder':
-                    await this.handleOpenVibeCoder();
+                    await this.openVibeCoder();
+                    break;
+                case 'collapseLineage':
+                    await this.handleCollapseLineage(data.tableFqn, data.nodeId, data.direction);
                     break;
                 // Forward all other messages to ModeManagerService
                 default:
@@ -111,9 +114,6 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
                     } else {
                         console.warn('ModeManagerService not initialized yet, ignoring message:', data.type);
                     }
-                    break;
-                case 'collapseLineage':
-                    await this.handleCollapseLineage(data.tableFqn, data.nodeId, data.direction);
                     break;
                 case 'error':
                     vscode.window.showErrorMessage(data.message);
@@ -193,7 +193,7 @@ export class OpenMetadataExplorerProvider implements vscode.WebviewViewProvider 
         }
     }
 
-    private async handleOpenVibeCoder() {
+    public async openVibeCoder() {
         if (!this._view) return;
 
         // Send message to webview to open the Vibe Coder modal
