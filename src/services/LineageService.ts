@@ -148,12 +148,12 @@ export class LineageService {
             
             // Add upstream edges if requested
             if (upstreamDepth > 0 && lineageData.upstreamEdges) {
-                allEdges.push(...lineageData.upstreamEdges);
+                allEdges.push(...Object.values(lineageData.upstreamEdges));
             }
             
             // Add downstream edges if requested
             if (downstreamDepth > 0 && lineageData.downstreamEdges) {
-                allEdges.push(...lineageData.downstreamEdges);
+                allEdges.push(...Object.values(lineageData.downstreamEdges));
             }
 
             return {

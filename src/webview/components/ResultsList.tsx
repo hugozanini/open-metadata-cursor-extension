@@ -1,5 +1,6 @@
 import React from 'react';
 import { TableCard } from './TableCard';
+import VibeCoderButton from './VibeCoder/VibeCoderButton';
 
 interface TableResult {
     id: string;
@@ -21,13 +22,16 @@ interface ResultsListProps {
     loading: boolean;
     searchQuery: string;
     onViewLineage?: (tableFqn: string, tableName: string) => void;
+    onVibeCoderActivate?: () => void;
 }
 
 export const ResultsList: React.FC<ResultsListProps> = ({ 
     results, 
     loading, 
     searchQuery,
-    onViewLineage
+    onVibeCoderActivate,
+    onViewLineage,
+
 }) => {
     if (loading) {
         return (
@@ -64,7 +68,18 @@ export const ResultsList: React.FC<ResultsListProps> = ({
                             <span className="feature-icon">🔗</span>
                             <span>Discover relationships between tables</span>
                         </div>
+                        <div className="feature-item">
+                            <span className="feature-icon">🎤</span>
+                            <span>Voice-to-text transcription</span>
+                        </div>
                     </div>
+                    
+                    <div className="welcome-actions">
+                        {onVibeCoderActivate && (
+                            <VibeCoderButton onActivate={onVibeCoderActivate} />
+                        )}
+                    </div>
+
                 </div>
             </div>
         );

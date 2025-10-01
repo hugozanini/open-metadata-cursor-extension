@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { AIInsights } from './components/AIInsights';
 import { ConnectionDots } from './components/ConnectionDots';
 import { DynamicSuggestions } from './components/DynamicSuggestions';
+
 import LineageModal from './components/Lineage/LineageModal';
 import { ResultsList } from './components/ResultsList';
 import { SearchInterface } from './components/SearchInterface';
+import VibeCoderModal from './components/VibeCoder/VibeCoderModal';
 import './styles.css';
 
 // VS Code API type
@@ -40,7 +42,21 @@ declare global {
 
 const getVsCodeApi = () => {
     if (!window.vscodeApi) {
-        window.vscodeApi = acquireVsCodeApi();
+        try {
+            window.vscodeApi = acquireVsCodeApi();
+        } catch (error) {
+            console.warn('VS Code API already acquired by another extension:', error);
+            // Create a mock API that logs messages instead of sending them
+            window.vscodeApi = {
+                postMessage: (message: any) => {
+                    console.log('Mock VS Code API - would send message:', message);
+                },
+                getState: () => ({}),
+                setState: (state: any) => {
+                    console.log('Mock VS Code API - would set state:', state);
+                }
+            };
+        }
     }
     return window.vscodeApi;
 };
@@ -64,6 +80,11 @@ export const App: React.FC = () => {
         tableFqn: '',
         tableName: '',
     });
+
+    // Vibe Coder modal state
+    const [vibeCoderModal, setVibeCoderModal] = useState(false);
+
+
 
     useEffect(() => {
         // Request configuration when component mounts
@@ -112,6 +133,10 @@ export const App: React.FC = () => {
                     setError(message.error);
                     setAiInsights('');
                     setResults([]);
+                    break;
+                    
+                case 'openVibeCoderModal':
+                    setVibeCoderModal(true);
                     break;
             }
         };
@@ -164,6 +189,17 @@ export const App: React.FC = () => {
         });
     };
 
+    // Vibe Coder handling functions
+    const handleOpenVibeCoder = () => {
+        setVibeCoderModal(true);
+    };
+
+    const handleCloseVibeCoder = () => {
+        setVibeCoderModal(false);
+    };
+
+
+
     // Hide loading message when React app mounts
     useEffect(() => {
         const loading = document.querySelector('.loading');
@@ -197,6 +233,7 @@ export const App: React.FC = () => {
                         onKeyPress={handleKeyPress}
                         loading={loading}
                         onExampleSearch={handleExampleSearch}
+
                         compact={true}
                     />
                     {searchQuery.trim() === '' && (
@@ -224,6 +261,7 @@ export const App: React.FC = () => {
                     loading={loading}
                     searchQuery={searchQuery}
                     onViewLineage={handleViewLineage}
+                    onVibeCoderActivate={handleOpenVibeCoder}
                 />
             </main>
 
@@ -234,6 +272,14 @@ export const App: React.FC = () => {
                 isOpen={lineageModal.isOpen}
                 onClose={handleCloseLineage}
             />
+
+            {/* Vibe Coder Modal */}
+            <VibeCoderModal
+                isOpen={vibeCoderModal}
+                onClose={handleCloseVibeCoder}
+                vscode={vscode}
+            />
+
         </div>
     );
 };
