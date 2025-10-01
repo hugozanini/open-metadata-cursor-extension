@@ -280,9 +280,27 @@ async function transcribeInternal({ audio, language }: { audio: Float32Array; la
         num_beams: (self as any).asrNumBeams ?? 5,
         suppress_blank: true,
         suppress_non_speech_tokens: true,
+        sampling_rate: 16000,
       });
       const text = typeof res?.text === 'string' ? res.text : '';
-      return cleanText(text);
+      const cleanedText = cleanText(text);
+      if (cleanedText && cleanedText.trim().length > 0) {
+        return cleanedText;
+      }
+      // Fallback to ONNX path if Xenova produced empty output
+      // (can happen with very short clips)
+      const [tokenizer, processor, model] =
+        await AutomaticSpeechRecognitionPipeline.getInstance();
+      const inputs = await processor(preprocessed);
+      const outputs = await model.generate({
+        ...inputs,
+        max_new_tokens: MAX_NEW_TOKENS,
+        language,
+      });
+      const decoded = tokenizer.batch_decode(outputs, { skip_special_tokens: true });
+      const rawText = decoded[0] || decoded;
+      const cleaned = typeof rawText === 'string' ? cleanText(rawText) : '';
+      return cleaned || (typeof rawText === 'string' ? rawText : '');
     } else {
       // Fallback to ONNX path
       const [tokenizer, processor, model] =

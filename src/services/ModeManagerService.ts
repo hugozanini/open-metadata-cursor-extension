@@ -170,7 +170,7 @@ export class ModeManagerService {
           type: 'updateStatus', 
           text: 'Ready'
         })
-      }, 5000) // 5 second timeout
+      }, 10000) // increase to 10s to allow model to return
       
       // We'll set isDictationActive = false when we receive the final transcript
       // in setupTranscriptListeners, or after the timeout
