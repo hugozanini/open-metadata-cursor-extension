@@ -64,12 +64,10 @@ function preprocessAudio(input: Float32Array): Float32Array {
 function cleanText(text: string): string {
   if (!text) return '';
   let out = text;
-  // Remove bracketed artifacts
-  out = out.replace(/\[(?:BLANK_AUDIO|NOISE|MUSIC|INAUDIBLE|APPLAUSE|COUGH|SILENCE)\]/gi, ' ');
-  // Remove any other bracketed tokens conservatively
+  // Remove bracketed artifacts like [BLANK_AUDIO], [MUSIC], etc., and any other bracketed tokens
   out = out.replace(/\[[^\]]+\]/g, ' ');
-  // Remove parenthetical stage directions with common noise words
-  out = out.replace(/\((?:audience|people|crowd|chatter|chattering|noise|music|inaudible|applause|cough|silence)[^)]*\)/gi, ' ');
+  // Remove any parenthetical cues entirely, e.g. (people chattering), (upbeat music), (indistinct)
+  out = out.replace(/\([^)]*\)/g, ' ');
   // Collapse whitespace
   out = out.replace(/\s+/g, ' ').trim();
   return out;
@@ -170,7 +168,7 @@ let processing = false;
 // -----------------------------
 let vadSession: any = null;
 let vadInitialized = false;
-let vadThreshold = 0.5; // default; can be tuned via message later
+let vadThreshold = 0.65; // stricter default; can be tuned via message later
 
 async function initVAD(modelUrl?: string) {
   if (!ort || vadInitialized) return;
@@ -202,7 +200,7 @@ async function vadFrameHasSpeech(frameFloat32: Float32Array): Promise<boolean> {
   let sum = 0;
   for (let i = 0; i < frameFloat32.length; i++) sum += frameFloat32[i] * frameFloat32[i];
   const rms = Math.sqrt(sum / Math.max(1, frameFloat32.length));
-  return rms > 0.01; // tuneable
+  return rms > 0.02; // tuneable, stricter
 }
 
 async function extractSpeechSegments(
@@ -244,7 +242,7 @@ async function extractSpeechSegments(
   }));
 }
 
-async function generate({ audio, language }: { audio: Float32Array; language: string }) {
+async function transcribeInternal({ audio, language }: { audio: Float32Array; language: string }): Promise<string> {
   if (processing) return;
   processing = true;
 
@@ -302,17 +300,11 @@ async function generate({ audio, language }: { audio: Float32Array; language: st
     const rawText = decoded[0] || decoded;
     const cleaned = typeof rawText === 'string' ? cleanText(rawText) : '';
 
-    // Send the output back to the main thread
-    self.postMessage({
-      status: "complete",
-      output: cleaned || rawText, // Prefer cleaned text
-    });
+    return cleaned || (typeof rawText === 'string' ? rawText : '');
   } catch (error) {
     console.error('Whisper generation error:', error);
-    self.postMessage({
-      status: "error",
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
+    self.postMessage({ status: "error", error: error instanceof Error ? error.message : 'Unknown error occurred' });
+    return '';
   } finally {
     processing = false;
   }
@@ -404,21 +396,26 @@ self.addEventListener("message", async (e) => {
       break;
 
     case "generate":
-      // Preprocess + VAD segmentation, then transcribe segments and merge
+      // Preprocess + VAD segmentation, then transcribe segments and emit single combined result
       try {
         const pre = preprocessAudio(data.audio as Float32Array);
-        const segs = await extractSpeechSegments(pre, 30, 16000, 150);
+        const segs = await extractSpeechSegments(pre, 30, 16000, 250);
         if (!segs.length) {
-          // No speech; do not emit text
           self.postMessage({ status: 'update', output: '' });
           break;
         }
-        let mergedText = '';
+        const parts: string[] = [];
         for (const s of segs) {
           // eslint-disable-next-line no-await-in-loop
-          await generate({ audio: s.audio, language: data.language });
-          // The generate() will post 'complete' with cleaned text; we can't easily intercept here without refactor.
-          // As a simple approach, rely on multiple 'complete' messages per chunk.
+          const txt = await transcribeInternal({ audio: s.audio, language: data.language });
+          const cleaned = cleanText(txt);
+          if (cleaned) parts.push(cleaned);
+        }
+        const combined = cleanText(parts.join(' '));
+        if (combined) {
+          self.postMessage({ status: 'complete', output: combined });
+        } else {
+          self.postMessage({ status: 'update', output: '' });
         }
       } catch (err) {
         self.postMessage({ status: 'error', error: err instanceof Error ? err.message : 'VAD/transcription error' });

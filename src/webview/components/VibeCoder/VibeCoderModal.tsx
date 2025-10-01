@@ -369,7 +369,7 @@ const VibeCoderModal: React.FC<VibeCoderModalProps> = ({ isOpen, onClose, vscode
             };
             
             // Start loading model with optional VAD URL
-            worker.postMessage({ type: 'load', data: { vadModelUrl: (window as any).vadModelUri, vadThreshold: 0.5 } });
+            worker.postMessage({ type: 'load', data: { vadModelUrl: (window as any).vadModelUri, vadThreshold: 0.7 } });
             
         } catch (error) {
             console.error('Failed to create worker:', error);
